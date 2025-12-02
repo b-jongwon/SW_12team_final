@@ -49,6 +49,75 @@ public class PersonalReport {
         topRiskFactors.add(factor);
     }
 
+    public void setPatientId(Long patientId) {
+        this.patientId = patientId;
+    }
+
+    public LocalDateTime getPeriodStart() {
+        return periodStart;
+    }
+
+    public void setPeriodStart(LocalDateTime periodStart) {
+        this.periodStart = periodStart;
+    }
+
+    public LocalDateTime getPeriodEnd() {
+        return periodEnd;
+    }
+
+    public void setPeriodEnd(LocalDateTime periodEnd) {
+        this.periodEnd = periodEnd;
+    }
+
+    public String getSummaryText() {
+        return summaryText;
+    }
+
+    public List<String> getTrendChartData() {
+        return trendChartData;
+    }
+
+    public void setTrendChartData(List<String> trendChartData) {
+        this.trendChartData = trendChartData;
+    }
+
+    public List<String> getTopRiskFactors() {
+        return topRiskFactors;
+    }
+
+    public void setTopRiskFactors(List<String> topRiskFactors) {
+        this.topRiskFactors = topRiskFactors;
+    }
+
+    public List<String> getRecommendedGoals() {
+        return recommendedGoals;
+    }
+
+    public void setRecommendedGoals(List<String> recommendedGoals) {
+        this.recommendedGoals = recommendedGoals;
+    }
+
+    public String getComplicationSummary() {
+        return complicationSummary;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public PersonalReport(Long id, Long patientId, LocalDateTime periodStart, LocalDateTime periodEnd, String summaryText, List<String> trendChartData, List<String> topRiskFactors, List<String> recommendedGoals, String complicationSummary, LocalDateTime createdAt) {
+        this.id = id;
+        this.patientId = patientId;
+        this.periodStart = periodStart;
+        this.periodEnd = periodEnd;
+        this.summaryText = summaryText;
+        this.trendChartData = trendChartData;
+        this.topRiskFactors = topRiskFactors;
+        this.recommendedGoals = recommendedGoals;
+        this.complicationSummary = complicationSummary;
+        this.createdAt = createdAt;
+    }
+
     public void addGoal(String goal) {
         recommendedGoals.add(goal);
     }

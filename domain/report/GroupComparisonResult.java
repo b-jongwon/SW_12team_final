@@ -19,6 +19,65 @@ public class GroupComparisonResult {
 
     public GroupComparisonResult() {}
 
+    public void setPatientId(Long patientId) {
+        this.patientId = patientId;
+    }
+
+    public String getGroupKey() {
+        return groupKey;
+    }
+
+    public void setGroupKey(String groupKey) {
+        this.groupKey = groupKey;
+    }
+
+    public double getPatientMetric() {
+        return patientMetric;
+    }
+
+    public void setPatientMetric(double patientMetric) {
+        this.patientMetric = patientMetric;
+    }
+
+    public double getGroupAverage() {
+        return groupAverage;
+    }
+
+    public void setGroupAverage(double groupAverage) {
+        this.groupAverage = groupAverage;
+    }
+
+    public double getPercentile() {
+        return percentile;
+    }
+
+    public void setPercentile(double percentile) {
+        this.percentile = percentile;
+    }
+
+    public String getChartData() {
+        return chartData;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public GroupComparisonResult(Long id, Long patientId, String groupKey, double patientMetric, double groupAverage, double percentile, String chartData, LocalDateTime createdAt) {
+        this.id = id;
+        this.patientId = patientId;
+        this.groupKey = groupKey;
+        this.patientMetric = patientMetric;
+        this.groupAverage = groupAverage;
+        this.percentile = percentile;
+        this.chartData = chartData;
+        this.createdAt = createdAt;
+    }
+
     public void initialize(Long patientId, String groupKey) {
         this.patientId = patientId;
         this.groupKey = groupKey;
