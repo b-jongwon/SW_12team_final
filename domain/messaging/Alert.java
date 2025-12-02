@@ -7,6 +7,31 @@ public class Alert {
     private Long id;
     private Long userId;
     private String message;
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setRead(boolean read) {
+        this.read = read;
+    }
+
+    public Alert(Long id, Long userId, String message, LocalDateTime createdAt, boolean read) {
+        this.id = id;
+        this.userId = userId;
+        this.message = message;
+        this.createdAt = createdAt;
+        this.read = read;
+    }
+
     private LocalDateTime createdAt;
     private boolean read;
 

@@ -8,6 +8,32 @@ public class Message {
     private Long threadId;
     private Long senderId;
     private String content;
+
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    public void setReadAt(LocalDateTime readAt) {
+        this.readAt = readAt;
+    }
+
+    public Message(Long id, Long threadId, Long senderId, String content, LocalDateTime sentAt, LocalDateTime readAt) {
+        this.id = id;
+        this.threadId = threadId;
+        this.senderId = senderId;
+        this.content = content;
+        this.sentAt = sentAt;
+        this.readAt = readAt;
+    }
+
     private LocalDateTime sentAt;
     private LocalDateTime readAt;
 
