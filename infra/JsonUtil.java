@@ -1,7 +1,7 @@
 package infra;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
+import domain.user.*; // User 패키지 전체 임포트
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -10,26 +10,51 @@ import java.time.LocalDateTime;
 
 public class JsonUtil {
 
+    // [핵심] User 클래스를 위한 커스텀 Deserializer 정의
+    // JSON을 읽어서 role을 확인한 뒤, Doctor/Patient 등 맞는 클래스로 매핑해줍니다.
+    private static final JsonDeserializer<User> userDeserializer = (json, typeOfT, context) -> {
+        JsonObject jsonObject = json.getAsJsonObject();
+        JsonElement roleElement = jsonObject.get("role");
+
+        if (roleElement == null) {
+            // 역할 정보가 없으면 기본 User로
+            return new Gson().fromJson(json, User.class);
+        }
+
+        String role = roleElement.getAsString();
+        try {
+            switch (role) {
+                case "DOCTOR":
+                    return context.deserialize(json, Doctor.class);
+                case "PATIENT":
+                    return context.deserialize(json, Patient.class);
+                case "CAREGIVER":
+                    return context.deserialize(json, Caregiver.class);
+                case "ADMIN":
+                    return context.deserialize(json, Admin.class);
+                default:
+                    return context.deserialize(json, User.class);
+            }
+        } catch (Exception e) {
+            return context.deserialize(json, User.class);
+        }
+    };
+
     private static final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
-                @Override
-                public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
-                    return new JsonPrimitive(src.toString()); // LocalDateTime → String
-                }
-            })
-            .registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() {
-                @Override
-                public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
-                    return LocalDateTime.parse(json.getAsString()); // String → LocalDateTime
-                }
-            })
+            // 1. 날짜(LocalDateTime) 처리 어댑터
+            .registerTypeAdapter(LocalDateTime.class, (JsonSerializer<LocalDateTime>) (src, typeOfSrc, context) ->
+                    new JsonPrimitive(src.toString()))
+            .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context) ->
+                    LocalDateTime.parse(json.getAsString()))
+
+            // 2. [추가됨] User 상속 구조 처리 어댑터 등록
+            .registerTypeAdapter(User.class, userDeserializer)
+
             .create();
 
     public static <T> T readJson(String path, Type typeOfT) {
         File file = new File(path);
-        if (!file.exists()) {
-            return null;
-        }
+        if (!file.exists()) return null;
         try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
             return gson.fromJson(reader, typeOfT);
         } catch (IOException e) {
@@ -40,9 +65,8 @@ public class JsonUtil {
 
     public static void writeJson(String path, Object data) {
         File file = new File(path);
-        File parent = file.getParentFile();
-        if (parent != null && !parent.exists()) {
-            parent.mkdirs();
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs();
         }
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
             gson.toJson(data, writer);

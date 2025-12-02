@@ -24,12 +24,12 @@ public class Main {
         // -------------------------
         // 1. 회원가입
         // -------------------------
-        User p1 = auth.registerPatient("patient1", "1234", "환자1", "010-1111-2222", "p1@test.com");
-        System.out.println("환자 등록 완료: " + p1);
+        User p1 = auth.register("patient1", "1234", "환자1", "PATIENT");
+        System.out.println("환자 등록 완료: " + p1.getName());
 
-        User d1 = auth.registerPatient("doctor1", "1234", "의사1", "010-2222-3333", "d1@test.com");
+        User d1 = auth.register("doctor1", "1234", "의사1", "DOCTOR");
         d1.changePassword("abcd"); // 테스트용
-        System.out.println("의사 등록 완료: " + d1);
+        System.out.println("의사 등록 완료: " + d1.getName());
 
 
         // -------------------------

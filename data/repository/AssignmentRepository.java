@@ -39,7 +39,11 @@ public class AssignmentRepository {
             .filter(a -> a.getPatientId().equals(pid))
             .collect(Collectors.toList());
     }
-
+    public List<PatientAssignment> findAssignmentsByDoctor(Long doctorId) {
+        return assignRepo.findAll().stream()
+                .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
+                .collect(Collectors.toList());
+    }
     // Reminder
     public ReminderSetting saveReminder(ReminderSetting r) {
         r.setId(IdGenerator.nextId("reminder"));

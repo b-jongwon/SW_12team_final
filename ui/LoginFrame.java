@@ -57,7 +57,7 @@ public class LoginFrame extends JFrame {
         });
 
         registerBtn.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "회원가입 화면은 아직 미구현");
+            new RegisterFrame();
         });
 
         setVisible(true);
