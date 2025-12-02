@@ -10,6 +10,38 @@ public class PatientAssignment {
     private Long caregiverId;
     private LocalDateTime assignedAt;
 
+    public PatientAssignment(Long id, Long patientId, Long doctorId, Long caregiverId, LocalDateTime assignedAt) {
+        this.id = id;
+        this.patientId = patientId;
+        this.doctorId = doctorId;
+        this.caregiverId = caregiverId;
+        this.assignedAt = assignedAt;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setPatientId(Long patientId) {
+        this.patientId = patientId;
+    }
+
+    public void setDoctorId(Long doctorId) {
+        this.doctorId = doctorId;
+    }
+
+    public void setCaregiverId(Long caregiverId) {
+        this.caregiverId = caregiverId;
+    }
+
+    public LocalDateTime getAssignedAt() {
+        return assignedAt;
+    }
+
+    public void setAssignedAt(LocalDateTime assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
     public PatientAssignment() {}
 
     public void assign(Long patientId, Long doctorId, Long caregiverId) {

@@ -5,8 +5,7 @@ import domain.report.PersonalReport;
 import domain.report.GroupComparisonResult;
 import domain.messaging.Message;
 import domain.community.CommunityPost;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.Gson;
+
 
 public class Main {
 

@@ -1,16 +1,29 @@
-
 package infra;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 
 public class JsonUtil {
 
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDateTime.class, new JsonSerializer<LocalDateTime>() {
+                @Override
+                public JsonElement serialize(LocalDateTime src, Type typeOfSrc, JsonSerializationContext context) {
+                    return new JsonPrimitive(src.toString()); // LocalDateTime → String
+                }
+            })
+            .registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() {
+                @Override
+                public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+                    return LocalDateTime.parse(json.getAsString()); // String → LocalDateTime
+                }
+            })
+            .create();
 
     public static <T> T readJson(String path, Type typeOfT) {
         File file = new File(path);
