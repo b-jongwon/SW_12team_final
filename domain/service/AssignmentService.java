@@ -5,7 +5,7 @@ import data.repository.AssignmentRepository;
 
 import domain.patient.PatientAssignment;
 import domain.patient.ReminderSetting;
-import domain.assignment.NotificationRule;
+import domain.patient.NotificationRule;
 
 import java.util.List;
 

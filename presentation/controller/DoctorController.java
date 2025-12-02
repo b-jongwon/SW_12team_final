@@ -10,7 +10,7 @@ public class DoctorController {
 
     private final DoctorService service = new DoctorService();
 
-    // [추가] 담당 환자 목록 조회 요청
+    // [NEW] 환자 목록 조회 연결
     public List<DoctorService.PatientSummary> getMyPatients(Long doctorId) {
         return service.getMyPatients(doctorId);
     }

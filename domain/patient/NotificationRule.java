@@ -1,5 +1,5 @@
 
-package domain.assignment;
+package domain.patient;
 
 public class NotificationRule {
     private Long id;

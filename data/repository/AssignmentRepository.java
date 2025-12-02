@@ -6,7 +6,7 @@ import infra.IdGenerator;
 
 import domain.patient.PatientAssignment;
 import domain.patient.ReminderSetting;
-import domain.assignment.NotificationRule;
+import domain.patient.NotificationRule;
 
 import com.google.gson.reflect.TypeToken;
 
@@ -39,9 +39,15 @@ public class AssignmentRepository {
             .filter(a -> a.getPatientId().equals(pid))
             .collect(Collectors.toList());
     }
+
     public List<PatientAssignment> findAssignmentsByDoctor(Long doctorId) {
         return assignRepo.findAll().stream()
                 .filter(a -> a.getDoctorId() != null && a.getDoctorId().equals(doctorId))
+                .collect(Collectors.toList());
+    }
+    public List<PatientAssignment> findAssignmentsByCaregiver(Long caregiverId) {
+        return assignRepo.findAll().stream()
+                .filter(a -> a.getCaregiverId() != null && a.getCaregiverId().equals(caregiverId))
                 .collect(Collectors.toList());
     }
     // Reminder

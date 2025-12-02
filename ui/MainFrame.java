@@ -110,13 +110,8 @@ public class MainFrame extends JFrame {
         topMenu.add(msgBtn);
         topMenu.add(commBtn);
 
-        // 보호자용 패널은 아직 없으므로, 임시로 JLabel 패널 사용
-        JPanel carePanel = new JPanel(new BorderLayout());
-        JLabel label = new JLabel("가족들의 건강 상태를 한눈에 보는 모니터링 화면입니다.", SwingConstants.CENTER);
-        label.setFont(new Font("맑은 고딕", Font.BOLD, 20));
-        carePanel.add(label);
-
-        mainPanel.add(carePanel, "CARE_HOME");
+        // [수정 완료] 이제 임시 패널이 아니라 진짜 CaregiverPanel을 사용합니다!
+        mainPanel.add(new CaregiverPanel(currentUser), "CARE_HOME");
         mainPanel.add(new MessagingPanel(currentUser), "MSG");
         mainPanel.add(new CommunityPanel(currentUser), "COMM");
 

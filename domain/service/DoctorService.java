@@ -3,9 +3,9 @@ package domain.service;
 import data.repository.AssignmentRepository;
 import data.repository.MedicalRepository;
 import data.repository.UserRepository;
-import domain.patient.PatientAssignment;
+import domain.patient.RiskAssessment; // (패키지 이동됨!)
+import domain.patient.PatientAssignment; // (패키지 이동됨!)
 import domain.medical.DoctorNote;
-import domain.patient.RiskAssessment;
 import domain.medical.ScheduledExam;
 import domain.user.User;
 
@@ -16,18 +16,18 @@ import java.util.Optional;
 
 public class DoctorService {
 
-    // 필요한 리포지토리들 (나중에 DI로 주입받아야 함)
     private final MedicalRepository medicalRepo = new MedicalRepository();
     private final AssignmentRepository assignmentRepo = new AssignmentRepository();
     private final UserRepository userRepo = new UserRepository();
 
     // =========================================================
-    // [핵심] 담당 환자 목록 조회 (이름 + 위험도 포함)
+    // [NEW] 담당 환자 목록 조회 (이름 + 위험도 포함)
     // =========================================================
     public List<PatientSummary> getMyPatients(Long doctorId) {
         List<PatientSummary> result = new ArrayList<>();
 
-        // 1. 나에게 배정된 환자 목록(ID) 가져오기
+        // 1. 나(의사)에게 배정된 환자 ID 목록 찾기 (AssignmentRepo 기능 필요)
+        // (AssignmentRepository에 findAssignmentsByDoctor 메서드가 없으면 오류가 날 수 있음 -> Step 1.5에서 추가)
         List<PatientAssignment> assignments = assignmentRepo.findAssignmentsByDoctor(doctorId);
 
         for (PatientAssignment assign : assignments) {
@@ -38,29 +38,29 @@ public class DoctorService {
             Optional<User> patientOpt = userRepo.findAll().stream()
                     .filter(u -> u.getId().equals(patientId))
                     .findFirst();
+
+            String loginId = "unknown";
             if (patientOpt.isPresent()) {
                 patientName = patientOpt.get().getName();
+                loginId = patientOpt.get().getLoginId();
             }
 
             // 3. 환자의 최근 위험도 찾기 (Medical Repo)
             String currentStatus = "데이터 없음";
             List<RiskAssessment> risks = medicalRepo.findRiskByPatient(patientId);
             if (!risks.isEmpty()) {
-                // 가장 최근 기록의 위험 레벨 가져오기
+                // 가장 최근 기록의 위험 레벨
                 currentStatus = risks.get(risks.size() - 1).getRiskLevel();
             }
 
-            // 4. 요약 정보(DTO) 생성 및 추가
-            // loginId를 화면에 보여주기 위해 User 객체에서 loginId도 가져오면 좋음
-            String patientLoginId = patientOpt.map(User::getLoginId).orElse("unknown");
-
-            result.add(new PatientSummary(patientLoginId, patientName, currentStatus, patientId));
+            // 4. 요약 정보(DTO) 생성
+            result.add(new PatientSummary(loginId, patientName, currentStatus, patientId));
         }
 
         return result;
     }
 
-    // --- 기존 메서드들 (소견, 예약) ---
+    // --- 기존 메서드들 ---
     public DoctorNote writeNote(Long doctorId, Long patientId, String content) {
         DoctorNote note = new DoctorNote();
         note.write(doctorId, patientId, content);
@@ -73,14 +73,12 @@ public class DoctorService {
         return medicalRepo.saveExam(exam);
     }
 
-    // =========================================================
-    // [DTO] UI에 보여줄 환자 요약 정보 내부 클래스
-    // =========================================================
+    // [DTO] UI 전달용 데이터 클래스
     public static class PatientSummary {
         private String loginId;
         private String name;
         private String status;
-        private Long realId; // 실제 DB ID (숨겨진 값)
+        private Long realId;
 
         public PatientSummary(String loginId, String name, String status, Long realId) {
             this.loginId = loginId;
@@ -93,8 +91,5 @@ public class DoctorService {
         public String getName() { return name; }
         public String getStatus() { return status; }
         public Long getRealId() { return realId; }
-
-        // JTable에 객체 자체를 넣을 때 문자열 표현 (필요시)
-        @Override public String toString() { return name; }
     }
 }
