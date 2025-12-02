@@ -2,10 +2,12 @@ package ui;
 
 import presentation.controller.PatientController;
 import presentation.controller.ReportController;
+import presentation.controller.AssignmentController; // [추가]
 import domain.user.User;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
 import domain.patient.GroupComparisonResult;
+import domain.patient.PatientAssignment; // [추가]
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +18,7 @@ public class PatientPanel extends JPanel {
     // 컨트롤러들 (DI 적용 전이라 직접 생성)
     private final PatientController patientController = new PatientController();
     private final ReportController reportController = new ReportController();
+    private final AssignmentController assignmentController = new AssignmentController(); // [추가]
 
     private User user;
 
@@ -50,10 +53,14 @@ public class PatientPanel extends JPanel {
         JPanel comparePanel = createComparePanel();
         tabbedPane.addTab("📊 또래 평균 비교", comparePanel);
 
+        // 탭 4: 연결 관리 (Assignment) [NEW]
+        JPanel connectionPanel = createConnectionPanel();
+        tabbedPane.addTab("🔗 주치의/보호자 연결", connectionPanel);
+
         add("Center", tabbedPane);
 
         // ==========================================
-        // [이벤트] 건강 기록 입력 (이전과 동일)
+        // [이벤트] 건강 기록 입력 (다이얼로그)
         // ==========================================
         addRecordBtn.addActionListener(e -> openInputDialog());
     }
@@ -106,7 +113,7 @@ public class PatientPanel extends JPanel {
             if (risks.isEmpty()) {
                 output.append("분석된 데이터가 없습니다. 먼저 건강 기록을 입력해주세요.\n");
             } else {
-                // 가장 최신 것 하나만 보여주거나 리스트로 보여줌
+                // 가장 최신 것 하나만 보여줌
                 RiskAssessment latest = risks.get(risks.size() - 1);
                 output.append("최종 분석 일시: " + latest.getAssessedAt() + "\n");
                 output.append("위험 레벨: [" + latest.getRiskLevel() + "]\n");
@@ -162,8 +169,76 @@ public class PatientPanel extends JPanel {
         return panel;
     }
 
+    // ---------------------------------------------------------
+    // 탭 4: 주치의/보호자 연결 패널 구현 [NEW]
+    // ---------------------------------------------------------
+    private JPanel createConnectionPanel() {
+        JPanel panel = new JPanel(null); // 자유 배치
+
+        JLabel infoLabel = new JLabel("담당 주치의와 보호자의 로그인 ID를 입력하여 연결하세요.");
+        infoLabel.setBounds(20, 20, 400, 30);
+        panel.add(infoLabel);
+
+        // 의사 입력
+        JLabel docLabel = new JLabel("👨‍⚕️ 주치의 ID:");
+        docLabel.setBounds(20, 70, 100, 30);
+        JTextField docField = new JTextField();
+        docField.setBounds(130, 70, 150, 30);
+        panel.add(docLabel);
+        panel.add(docField);
+
+        // 보호자 입력
+        JLabel careLabel = new JLabel("🏡 보호자 ID:");
+        careLabel.setBounds(20, 120, 100, 30);
+        JTextField careField = new JTextField();
+        careField.setBounds(130, 120, 150, 30);
+        panel.add(careLabel);
+        panel.add(careField);
+
+        // 연결 버튼
+        JButton connectBtn = new JButton("연결 신청");
+        connectBtn.setBounds(130, 170, 150, 40);
+        panel.add(connectBtn);
+
+        // 결과 출력
+        JTextArea statusArea = new JTextArea();
+        statusArea.setEditable(false);
+        statusArea.setBounds(20, 230, 400, 100);
+        statusArea.setBorder(BorderFactory.createTitledBorder("연결 상태"));
+        panel.add(statusArea);
+
+        // 버튼 클릭 시 연결 시도
+        connectBtn.addActionListener(e -> {
+            String docId = docField.getText().trim();
+            String careId = careField.getText().trim();
+
+            if (docId.isEmpty() && careId.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "적어도 하나의 ID는 입력해주세요.");
+                return;
+            }
+
+            try {
+                // AssignmentController를 통해 연결 (ID -> User 검색 -> Assignment 생성)
+                PatientAssignment result = assignmentController.connectDoctorAndCaregiver(user.getId(), docId, careId);
+
+                JOptionPane.showMessageDialog(this, "연결 정보가 저장되었습니다!");
+                statusArea.setText("✅ 연결 성공!\n");
+                if (result.getDoctorId() != null) statusArea.append("- 주치의 (DB ID): " + result.getDoctorId() + "\n");
+                if (result.getCaregiverId() != null) statusArea.append("- 보호자 (DB ID): " + result.getCaregiverId() + "\n");
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "알 수 없는 오류가 발생했습니다.");
+            }
+        });
+
+        return panel;
+    }
+
     // ==========================================
-    // [헬퍼] 입력 다이얼로그 (이전 코드와 동일, 생략 가능하지만 편의상 포함)
+    // [헬퍼] 입력 다이얼로그 (팝업창)
     // ==========================================
     private void openInputDialog() {
         JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
