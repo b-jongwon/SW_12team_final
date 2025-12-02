@@ -3,8 +3,8 @@ package domain.service;
 
 import data.repository.AssignmentRepository;
 
-import domain.assignment.PatientAssignment;
-import domain.assignment.ReminderSetting;
+import domain.patient.PatientAssignment;
+import domain.patient.ReminderSetting;
 import domain.assignment.NotificationRule;
 
 import java.util.List;

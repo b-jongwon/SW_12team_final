@@ -3,9 +3,9 @@ package domain.service;
 import data.repository.AssignmentRepository;
 import data.repository.MedicalRepository;
 import data.repository.UserRepository;
-import domain.assignment.PatientAssignment;
+import domain.patient.PatientAssignment;
 import domain.medical.DoctorNote;
-import domain.medical.RiskAssessment;
+import domain.patient.RiskAssessment;
 import domain.medical.ScheduledExam;
 import domain.user.User;
 

@@ -2,8 +2,8 @@
 package presentation.controller;
 
 import domain.service.ReportService;
-import domain.report.PersonalReport;
-import domain.report.GroupComparisonResult;
+import domain.patient.PersonalReport;
+import domain.patient.GroupComparisonResult;
 
 import java.util.List;
 

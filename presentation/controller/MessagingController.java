@@ -4,7 +4,7 @@ package presentation.controller;
 import domain.service.MessagingService;
 import domain.messaging.Message;
 import domain.messaging.MessageThread;
-import domain.messaging.Alert;
+import domain.patient.Alert;
 
 import java.util.List;
 

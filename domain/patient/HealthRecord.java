@@ -1,5 +1,5 @@
 
-package domain.medical;
+package domain.patient;
 
 import java.time.LocalDateTime;
 

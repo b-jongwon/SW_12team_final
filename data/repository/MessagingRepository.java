@@ -6,7 +6,7 @@ import infra.IdGenerator;
 
 import domain.messaging.Message;
 import domain.messaging.MessageThread;
-import domain.messaging.Alert;
+import domain.patient.Alert;
 
 import com.google.gson.reflect.TypeToken;
 import java.util.List;

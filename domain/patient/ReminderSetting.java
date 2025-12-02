@@ -1,5 +1,5 @@
 
-package domain.assignment;
+package domain.patient;
 
 public class ReminderSetting {
     private Long id;

@@ -1,5 +1,5 @@
 
-package domain.messaging;
+package domain.patient;
 
 import java.time.LocalDateTime;
 

@@ -1,5 +1,5 @@
 
-package domain.community;
+package domain.content;
 
 public class ContentItem {
     private Long id;

@@ -1,6 +1,9 @@
 
 package data.repository;
 
+import domain.content.Announcement;
+import domain.content.ChecklistItem;
+import domain.content.ContentItem;
 import infra.BaseJsonRepository;
 import infra.IdGenerator;
 

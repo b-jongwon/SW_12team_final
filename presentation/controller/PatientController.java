@@ -2,9 +2,9 @@
 package presentation.controller;
 
 import domain.service.PatientCareService;
-import domain.medical.HealthRecord;
-import domain.medical.RiskAssessment;
-import domain.medical.ComplicationRisk;
+import domain.patient.HealthRecord;
+import domain.patient.RiskAssessment;
+import domain.patient.ComplicationRisk;
 
 import java.util.List;
 

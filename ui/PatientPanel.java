@@ -3,9 +3,9 @@ package ui;
 import presentation.controller.PatientController;
 import presentation.controller.ReportController;
 import domain.user.User;
-import domain.medical.HealthRecord;
-import domain.medical.RiskAssessment;
-import domain.report.GroupComparisonResult;
+import domain.patient.HealthRecord;
+import domain.patient.RiskAssessment;
+import domain.patient.GroupComparisonResult;
 
 import javax.swing.*;
 import java.awt.*;

@@ -1,6 +1,9 @@
 
 package presentation.controller;
 
+import domain.content.Announcement;
+import domain.content.ChecklistItem;
+import domain.content.ContentItem;
 import domain.service.CommunityService;
 import domain.community.*;
 

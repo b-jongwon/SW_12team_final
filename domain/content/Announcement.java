@@ -1,5 +1,5 @@
 
-package domain.community;
+package domain.content;
 
 import java.time.LocalDateTime;
 

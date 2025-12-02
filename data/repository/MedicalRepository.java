@@ -3,9 +3,9 @@ package data.repository;
 import infra.BaseJsonRepository;
 import infra.IdGenerator;
 
-import domain.medical.HealthRecord;
-import domain.medical.RiskAssessment;
-import domain.medical.ComplicationRisk;
+import domain.patient.HealthRecord;
+import domain.patient.RiskAssessment;
+import domain.patient.ComplicationRisk;
 // [추가된 Import]
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;

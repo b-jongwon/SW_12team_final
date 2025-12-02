@@ -4,7 +4,7 @@ package domain.service;
 import data.repository.MessagingRepository;
 import domain.messaging.Message;
 import domain.messaging.MessageThread;
-import domain.messaging.Alert;
+import domain.patient.Alert;
 
 import java.util.List;
 

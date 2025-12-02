@@ -3,8 +3,8 @@ package data.repository;
 
 import infra.BaseJsonRepository;
 import infra.IdGenerator;
-import domain.report.PersonalReport;
-import domain.report.GroupComparisonResult;
+import domain.patient.PersonalReport;
+import domain.patient.GroupComparisonResult;
 import com.google.gson.reflect.TypeToken;
 import java.util.List;
 import java.util.stream.Collectors;

@@ -2,8 +2,8 @@
 package domain.service;
 
 import data.repository.ReportRepository;
-import domain.report.PersonalReport;
-import domain.report.GroupComparisonResult;
+import domain.patient.PersonalReport;
+import domain.patient.GroupComparisonResult;
 
 import java.time.LocalDateTime;
 import java.util.List;

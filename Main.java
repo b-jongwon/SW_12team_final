@@ -1,8 +1,8 @@
 import presentation.controller.*;
 import domain.user.User;
-import domain.medical.HealthRecord;
-import domain.report.PersonalReport;
-import domain.report.GroupComparisonResult;
+import domain.patient.HealthRecord;
+import domain.patient.PersonalReport;
+import domain.patient.GroupComparisonResult;
 import domain.messaging.Message;
 import domain.community.CommunityPost;
 
