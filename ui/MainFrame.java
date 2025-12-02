@@ -20,7 +20,32 @@ public class MainFrame extends JFrame {
         setSize(900, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        JButton logoutBtn = new JButton("🚪 로그아웃");
+        logoutBtn.setBackground(new Color(255, 220, 220)); // 연한 빨간색 (강조)
 
+        logoutBtn.addActionListener(e -> {
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    "정말 로그아웃 하시겠습니까?",
+                    "로그아웃 확인",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (choice == JOptionPane.YES_OPTION) {
+                System.out.println("로그아웃 되었습니다.");
+
+                // 1. 현재 메인 화면 닫기 (메모리 해제)
+                dispose();
+
+                // 2. 로그인 화면 다시 열기
+                new LoginFrame();
+            }
+        });
+
+        // 메뉴 패널에 로그아웃 버튼 추가 (가장 앞에 추가하거나 뒤에 추가)
+        topMenu.add(logoutBtn);
+        // 구분선 역할의 빈 라벨 추가 (디자인용)
+        topMenu.add(new JLabel(" | "));
         // =========================================================
         // [핵심 로직] 사용자 역할(Role)에 따른 화면 구성 분기
         // =========================================================
