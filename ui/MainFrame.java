@@ -24,16 +24,17 @@ public class MainFrame extends JFrame {
         // =========================================================
         // [핵심 로직] 사용자 역할(Role)에 따른 화면 구성 분기
         // =========================================================
-        String role = user.getRole(); // "PATIENT", "DOCTOR", "CAREGIVER"
+        String role = user.getRole(); // "PATIENT", "DOCTOR", "CAREGIVER", "ADMIN"
 
         if ("DOCTOR".equalsIgnoreCase(role)) {
-            // [의사] 1. 환자 관리 패널, 2. 메시지, 3. 커뮤니티
             configureForDoctor();
         } else if ("CAREGIVER".equalsIgnoreCase(role)) {
-            // [보호자] 1. 가족 모니터링 패널(미구현시 대체), 2. 메시지, 3. 커뮤니티
             configureForCaregiver();
+        } else if ("ADMIN".equalsIgnoreCase(role)) {
+            // [추가됨] 관리자일 경우
+            configureForAdmin();
         } else {
-            // [환자] 1. 나의 건강 패널, 2. 메시지, 3. 커뮤니티
+            // 그 외(기본)는 환자로 처리
             configureForPatient();
         }
 
@@ -48,7 +49,6 @@ public class MainFrame extends JFrame {
     // [환자용] 화면 구성
     // -----------------------------------------------------------------
     private void configureForPatient() {
-        // 메뉴 버튼 생성
         JButton homeBtn = new JButton("🏠 나의 건강");
         JButton msgBtn = new JButton("📩 메시지");
         JButton commBtn = new JButton("💬 커뮤니티");
@@ -57,17 +57,14 @@ public class MainFrame extends JFrame {
         topMenu.add(msgBtn);
         topMenu.add(commBtn);
 
-        // 패널 추가
         mainPanel.add(new PatientPanel(currentUser), "HOME");
         mainPanel.add(new MessagingPanel(currentUser), "MSG");
         mainPanel.add(new CommunityPanel(currentUser), "COMM");
 
-        // 이벤트 연결
         homeBtn.addActionListener(e -> cardLayout.show(mainPanel, "HOME"));
         msgBtn.addActionListener(e -> cardLayout.show(mainPanel, "MSG"));
         commBtn.addActionListener(e -> cardLayout.show(mainPanel, "COMM"));
 
-        // 초기 화면
         cardLayout.show(mainPanel, "HOME");
     }
 
@@ -75,7 +72,6 @@ public class MainFrame extends JFrame {
     // [의사용] 화면 구성
     // -----------------------------------------------------------------
     private void configureForDoctor() {
-        // 의사 전용 메뉴
         JButton patientListBtn = new JButton("👨‍⚕️ 담당 환자 관리");
         JButton msgBtn = new JButton("📩 상담 메시지");
         JButton commBtn = new JButton("📢 건강 칼럼(커뮤니티)");
@@ -84,17 +80,14 @@ public class MainFrame extends JFrame {
         topMenu.add(msgBtn);
         topMenu.add(commBtn);
 
-        // 패널 추가 (DoctorPanel 사용!)
         mainPanel.add(new DoctorPanel(currentUser), "DOC_HOME");
         mainPanel.add(new MessagingPanel(currentUser), "MSG");
         mainPanel.add(new CommunityPanel(currentUser), "COMM");
 
-        // 이벤트 연결
         patientListBtn.addActionListener(e -> cardLayout.show(mainPanel, "DOC_HOME"));
         msgBtn.addActionListener(e -> cardLayout.show(mainPanel, "MSG"));
         commBtn.addActionListener(e -> cardLayout.show(mainPanel, "COMM"));
 
-        // 초기 화면
         cardLayout.show(mainPanel, "DOC_HOME");
     }
 
@@ -110,7 +103,6 @@ public class MainFrame extends JFrame {
         topMenu.add(msgBtn);
         topMenu.add(commBtn);
 
-        // [수정 완료] 이제 임시 패널이 아니라 진짜 CaregiverPanel을 사용합니다!
         mainPanel.add(new CaregiverPanel(currentUser), "CARE_HOME");
         mainPanel.add(new MessagingPanel(currentUser), "MSG");
         mainPanel.add(new CommunityPanel(currentUser), "COMM");
@@ -120,5 +112,26 @@ public class MainFrame extends JFrame {
         commBtn.addActionListener(e -> cardLayout.show(mainPanel, "COMM"));
 
         cardLayout.show(mainPanel, "CARE_HOME");
+    }
+
+    // -----------------------------------------------------------------
+    // [관리자용] 화면 구성 (NEW)
+    // -----------------------------------------------------------------
+    private void configureForAdmin() {
+        JButton adminBtn = new JButton("⚙️ 시스템 관리");
+        // 관리자는 보통 커뮤니티 관리도 하므로 추가 가능
+        JButton commBtn = new JButton("💬 커뮤니티 관리");
+
+        topMenu.add(adminBtn);
+        topMenu.add(commBtn);
+
+        // AdminPanel 추가
+        mainPanel.add(new AdminPanel(currentUser), "ADMIN_HOME");
+        mainPanel.add(new CommunityPanel(currentUser), "COMM");
+
+        adminBtn.addActionListener(e -> cardLayout.show(mainPanel, "ADMIN_HOME"));
+        commBtn.addActionListener(e -> cardLayout.show(mainPanel, "COMM"));
+
+        cardLayout.show(mainPanel, "ADMIN_HOME");
     }
 }
