@@ -9,6 +9,37 @@ public class NotificationRule {
 
     public NotificationRule() {}
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setPatientId(Long patientId) {
+        this.patientId = patientId;
+    }
+
+    public String getCondition() {
+        return condition;
+    }
+
+    public void setCondition(String condition) {
+        this.condition = condition;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public NotificationRule(Long id, Long patientId, String condition, String action) {
+        this.id = id;
+        this.patientId = patientId;
+        this.condition = condition;
+        this.action = action;
+    }
+
     public void configure(Long pid, String condition, String action) {
         this.patientId = pid;
         this.condition = condition;
