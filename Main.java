@@ -24,13 +24,13 @@ public class Main {
         // -------------------------
         // 1. 회원가입
         // -------------------------
-        User p1 = auth.register("patient1", "1234", "김환자", "PATIENT");
+        User p1 = auth.register("환자1", "1234", "환자1", "PATIENT");
         System.out.println("✅ 환자 등록: " + p1.getName());
 
-        User d1 = auth.register("doctor1", "1234", "이의사", "DOCTOR");
+        User d1 = auth.register("의사1", "1234", "의사1", "DOCTOR");
         System.out.println("✅ 의사 등록: " + d1.getName());
 
-        User c1 = auth.register("caregiver1", "1234", "박보호", "CAREGIVER");
+        User c1 = auth.register("보호자1", "1234", "보호자1", "CAREGIVER");
         System.out.println("✅ 보호자 등록: " + c1.getName());
 
         // [추가] 관리자 계정 생성
