@@ -10,9 +10,19 @@ public class DoctorController {
 
     private final DoctorService service = new DoctorService();
 
-    // [NEW] 환자 목록 조회 연결
+    // 내 환자 목록 (수락된 사람만)
     public List<DoctorService.PatientSummary> getMyPatients(Long doctorId) {
         return service.getMyPatients(doctorId);
+    }
+
+    // [NEW] 대기 중인 요청 목록
+    public List<DoctorService.PatientSummary> getPendingRequests(Long doctorId) {
+        return service.getPendingRequests(doctorId);
+    }
+
+    // [NEW] 요청 처리 (수락/거절)
+    public void reply(Long assignmentId, boolean accept) {
+        service.replyToRequest(assignmentId, accept);
     }
 
     public DoctorNote saveNote(Long doctorId, Long patientId, String content) {

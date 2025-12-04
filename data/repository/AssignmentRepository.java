@@ -50,6 +50,9 @@ public class AssignmentRepository {
                 .filter(a -> a.getCaregiverId() != null && a.getCaregiverId().equals(caregiverId))
                 .collect(Collectors.toList());
     }
+    public List<PatientAssignment> findAll() {
+        return assignRepo.findAll();
+    }
     // Reminder
     public ReminderSetting saveReminder(ReminderSetting r) {
         r.setId(IdGenerator.nextId("reminder"));

@@ -1,8 +1,8 @@
 package ui;
 
 import presentation.controller.DoctorController;
+import domain.service.DoctorService.PatientSummary;
 import domain.user.User;
-import domain.service.DoctorService.PatientSummary; // DTO 임포트
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -15,11 +15,14 @@ public class DoctorPanel extends JPanel {
     private final DoctorController controller = new DoctorController();
 
     // UI 컴포넌트
-    private JTable patientTable;
-    private DefaultTableModel tableModel;
-    private JTextArea noteArea;
+    private JTable patientTable; // 수락된 환자
+    private DefaultTableModel patientModel;
 
-    private Long selectedPatientId = null; // 선택된 환자의 실제 ID
+    private JTable requestTable; // 대기중인 요청
+    private DefaultTableModel requestModel;
+
+    private JTextArea noteArea;
+    private Long selectedPatientId = null;
 
     public DoctorPanel(User doctor) {
         this.doctor = doctor;
@@ -29,40 +32,24 @@ public class DoctorPanel extends JPanel {
         JLabel titleLabel = new JLabel("👨‍⚕️ " + doctor.getName() + " 선생님의 진료실");
         titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
         // 2. 중앙 SplitPane
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-        splitPane.setDividerLocation(400);
+        splitPane.setDividerLocation(450);
 
-        // [왼쪽] 환자 목록
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        JButton refreshBtn = new JButton("목록 새로고침"); // 새로고침 버튼
-        leftPanel.add(refreshBtn, BorderLayout.NORTH);
+        // ========================================================
+        // [왼쪽] 탭 패널 (담당 환자 vs 연결 요청)
+        // ========================================================
+        JTabbedPane leftTab = new JTabbedPane();
+        leftTab.addTab("담당 환자 목록", createMyPatientPanel());
+        leftTab.addTab("🔔 신규 연결 요청", createRequestPanel());
 
-        // 테이블 모델 (가짜 데이터 제거함)
-        String[] colNames = {"ID", "이름", "위험도", "DB_ID(Hidden)"};
-        tableModel = new DefaultTableModel(colNames, 0) {
-            @Override public boolean isCellEditable(int row, int col) { return false; }
-        };
-        patientTable = new JTable(tableModel);
+        splitPane.setLeftComponent(leftTab);
 
-        // 테이블 선택 이벤트
-        patientTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = patientTable.getSelectedRow();
-                if (row != -1) {
-                    selectedPatientId = (Long) tableModel.getValueAt(row, 3); // DB_ID 가져오기
-                    String pName = (String) tableModel.getValueAt(row, 1);
-                    noteArea.setBorder(BorderFactory.createTitledBorder("📝 " + pName + "님 소견 작성"));
-                }
-            }
-        });
-
-        leftPanel.add(new JScrollPane(patientTable), BorderLayout.CENTER);
-
-        // [오른쪽] 상세 작업 (기존 유지)
+        // ========================================================
+        // [오른쪽] 상세 작업 (기존 코드 유지)
+        // ========================================================
         JPanel rightPanel = new JPanel(new BorderLayout());
         noteArea = new JTextArea();
         noteArea.setBorder(BorderFactory.createTitledBorder("📝 진료 소견 / 메모 작성"));
@@ -75,71 +62,140 @@ public class DoctorPanel extends JPanel {
 
         rightPanel.add(new JScrollPane(noteArea), BorderLayout.CENTER);
         rightPanel.add(btnPanel, BorderLayout.SOUTH);
-
-        splitPane.setLeftComponent(leftPanel);
         splitPane.setRightComponent(rightPanel);
+
         add(splitPane, BorderLayout.CENTER);
 
-        // ==========================================
-        // 이벤트 리스너
-        // ==========================================
-
-        // 1. 목록 새로고침 (진짜 데이터 로드)
-        refreshBtn.addActionListener(e -> loadPatientList());
-
-        // 2. 소견 저장
+        // ----------------------------------------------------
+        // [이벤트] 오른쪽 버튼 액션
+        // ----------------------------------------------------
         saveNoteBtn.addActionListener(e -> {
             if (selectedPatientId == null) {
-                JOptionPane.showMessageDialog(this, "환자를 선택해주세요.");
+                JOptionPane.showMessageDialog(this, "담당 환자 탭에서 환자를 선택해주세요.");
                 return;
             }
             String content = noteArea.getText().trim();
             if (content.isEmpty()) return;
-
             controller.saveNote(doctor.getId(), selectedPatientId, content);
             JOptionPane.showMessageDialog(this, "저장되었습니다.");
             noteArea.setText("");
         });
 
-        // 3. 검사 예약
         scheduleBtn.addActionListener(e -> {
             if (selectedPatientId == null) {
                 JOptionPane.showMessageDialog(this, "환자를 선택해주세요.");
                 return;
             }
             String dateStr = JOptionPane.showInputDialog("예약 날짜 (yyyy-MM-ddTHH:mm):");
-            if (dateStr != null && !dateStr.isEmpty()) {
+            if (dateStr != null) {
                 try {
-                    controller.scheduleExam(doctor.getId(), selectedPatientId, LocalDateTime.parse(dateStr), "정기 검진");
+                    controller.scheduleExam(doctor.getId(), selectedPatientId, LocalDateTime.parse(dateStr), "검사");
                     JOptionPane.showMessageDialog(this, "예약되었습니다.");
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage());
+                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage()); }
+            }
+        });
+    }
+
+    // --------------------------------------------------------
+    // [탭 1] 내 담당 환자 목록 패널
+    // --------------------------------------------------------
+    private JPanel createMyPatientPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JButton refreshBtn = new JButton("새로고침");
+        panel.add(refreshBtn, BorderLayout.NORTH);
+
+        String[] cols = {"ID", "이름", "상태", "DB_ID"};
+        patientModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+        patientTable = new JTable(patientModel);
+
+        // 클릭 시 환자 선택
+        patientTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int row = patientTable.getSelectedRow();
+                if (row != -1) {
+                    selectedPatientId = (Long) patientModel.getValueAt(row, 3);
+                    String name = (String) patientModel.getValueAt(row, 1);
+                    noteArea.setBorder(BorderFactory.createTitledBorder("📝 " + name + "님 소견 작성"));
                 }
             }
         });
 
-        // 초기 로드
-        loadPatientList();
+        panel.add(new JScrollPane(patientTable), BorderLayout.CENTER);
+
+        refreshBtn.addActionListener(e -> loadMyPatients());
+        loadMyPatients(); // 초기 로드
+        return panel;
     }
 
-    // [메서드] 컨트롤러에서 진짜 데이터를 가져와 테이블에 채움
-    private void loadPatientList() {
-        tableModel.setRowCount(0);
+    // --------------------------------------------------------
+    // [탭 2] 연결 요청 관리 패널
+    // --------------------------------------------------------
+    private JPanel createRequestPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JButton refreshBtn = new JButton("요청 새로고침");
+
+        JPanel btnBox = new JPanel();
+        JButton acceptBtn = new JButton("✅ 수락");
+        JButton rejectBtn = new JButton("❌ 거절");
+        btnBox.add(refreshBtn);
+        btnBox.add(acceptBtn);
+        btnBox.add(rejectBtn);
+        panel.add(btnBox, BorderLayout.NORTH);
+
+        String[] cols = {"환자 ID", "이름", "신청 상태", "ASSIGN_ID"};
+        requestModel = new DefaultTableModel(cols, 0);
+        requestTable = new JTable(requestModel);
+        panel.add(new JScrollPane(requestTable), BorderLayout.CENTER);
+
+        // 수락 버튼 이벤트
+        acceptBtn.addActionListener(e -> processRequest(true));
+        rejectBtn.addActionListener(e -> processRequest(false));
+        refreshBtn.addActionListener(e -> loadRequests());
+
+        loadRequests(); // 초기 로드
+        return panel;
+    }
+
+    // 데이터 로드: 내 환자
+    private void loadMyPatients() {
+        patientModel.setRowCount(0);
         selectedPatientId = null;
-
-        List<PatientSummary> patients = controller.getMyPatients(doctor.getId());
-
-        if (patients.isEmpty()) {
-            // 데이터가 없을 때 (배정된 환자가 없음)
-        } else {
-            for (PatientSummary p : patients) {
-                tableModel.addRow(new Object[]{
-                        p.getLoginId(),
-                        p.getName(),
-                        p.getStatus(),
-                        p.getRealId()
-                });
-            }
+        List<PatientSummary> list = controller.getMyPatients(doctor.getId());
+        for (PatientSummary p : list) {
+            patientModel.addRow(new Object[]{p.getLoginId(), p.getName(), p.getStatus(), p.getRealId()});
         }
+    }
+
+    // 데이터 로드: 요청 목록
+    private void loadRequests() {
+        requestModel.setRowCount(0);
+        List<PatientSummary> list = controller.getPendingRequests(doctor.getId());
+        for (PatientSummary p : list) {
+            requestModel.addRow(new Object[]{p.getLoginId(), p.getName(), "대기중", p.getAssignmentId()});
+        }
+    }
+
+    private void processRequest(boolean accept) {
+        int row = requestTable.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "처리할 요청을 선택해주세요.");
+            return;
+        }
+
+        // 테이블에서 ASSIGN_ID 가져오기
+        Long assignId = (Long) requestModel.getValueAt(row, 3);
+
+        // 1. 컨트롤러 호출 (상태 변경)
+        controller.reply(assignId, accept);
+
+        String msg = accept ? "✅ 수락되었습니다. 담당 환자 탭을 확인하세요." : "❌ 거절되었습니다.";
+        JOptionPane.showMessageDialog(this, msg);
+
+        // 2. [UI 갱신] 두 테이블 모두 새로고침
+        // (요청 목록에서는 사라지고, 수락했다면 환자 목록에는 추가됨)
+        loadRequests();   // 요청 대기열 갱신 (사라짐)
+        loadMyPatients(); // 환자 목록 갱신 (나타남)
     }
 }

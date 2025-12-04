@@ -218,13 +218,15 @@ public class PatientPanel extends JPanel {
             }
 
             try {
-                // AssignmentController를 통해 연결 (ID -> User 검색 -> Assignment 생성)
-                PatientAssignment result = assignmentController.connectDoctorAndCaregiver(user.getId(), docId, careId);
+                // [수정됨] connectDoctorAndCaregiver -> requestConnection
+                // 이제 "저장되었습니다"가 아니라 "신청되었습니다"가 더 정확한 표현입니다.
+                PatientAssignment result = assignmentController.requestConnection(user.getId(), docId, careId);
 
-                JOptionPane.showMessageDialog(this, "연결 정보가 저장되었습니다!");
-                statusArea.setText("✅ 연결 성공!\n");
-                if (result.getDoctorId() != null) statusArea.append("- 주치의 (DB ID): " + result.getDoctorId() + "\n");
-                if (result.getCaregiverId() != null) statusArea.append("- 보호자 (DB ID): " + result.getCaregiverId() + "\n");
+                JOptionPane.showMessageDialog(this, "연결 신청이 전송되었습니다! (상대방의 수락 대기 중)");
+
+                statusArea.setText("⏳ 연결 신청 대기 중 (PENDING)...\n");
+                if (result.getDoctorId() != null) statusArea.append("- 주치의 ID: " + result.getDoctorId() + "\n");
+                if (result.getCaregiverId() != null) statusArea.append("- 보호자 ID: " + result.getCaregiverId() + "\n");
 
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage());
