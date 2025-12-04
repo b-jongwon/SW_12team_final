@@ -42,4 +42,7 @@ public class AssignmentController {
     public List<NotificationRule> getRules(Long pid) {
         return service.getRules(pid);
     }
+    public List<domain.service.AssignmentService.ConnectionSummary> getStatus(Long patientId) {
+        return service.getConnectionStatus(patientId);
+    }
 }

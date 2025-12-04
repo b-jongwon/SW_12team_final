@@ -49,24 +49,24 @@ public class DoctorService {
         return convertToSummaries(pending);
     }
 
-    // =========================================================
-    // [NEW] 요청 수락/거절 처리
-    // =========================================================
     public void replyToRequest(Long assignmentId, boolean isAccept) {
-        // ID로 배정 정보 찾기 (AssignmentRepository에 findById가 필요하지만,
-        // 편의상 findAll에서 찾음. 실제로는 findById 구현 권장)
-        Optional<PatientAssignment> target = assignmentRepo.findAll().stream() // 임시: repo public 접근 필요할수도
+        // ID로 찾기
+        Optional<PatientAssignment> target = assignmentRepo.findAll().stream()
                 .filter(a -> a.getId().equals(assignmentId))
                 .findFirst();
 
         if (target.isPresent()) {
             PatientAssignment assignment = target.get();
+
             if (isAccept) {
-                assignment.accept(); // ACCEPTED
+                assignment.accept(); // 상태를 ACCEPTED로 변경
             } else {
-                assignment.reject(); // REJECTED
+                assignment.reject(); // 상태를 REJECTED로 변경
             }
-            assignmentRepo.saveAssignment(assignment); // 상태 업데이트 저장
+
+            // [수정] ★ save(추가) 하지 말고 update(교체) 해야 함!
+            // assignmentRepo.saveAssignment(assignment); // <--- 이거 삭제!!
+            assignmentRepo.updateAssignment(assignment);  // <--- 이걸로 교체!!
         }
     }
 
@@ -106,6 +106,15 @@ public class DoctorService {
         ScheduledExam exam = new ScheduledExam();
         exam.schedule(doctorId, patientId, date, description);
         return medicalRepo.saveExam(exam);
+    }
+    // [NEW] 특정 환자의 건강 기록 조회
+    public List<domain.patient.HealthRecord> getPatientHealthRecords(Long patientId) {
+        return medicalRepo.findRecordsByPatient(patientId);
+    }
+
+    // [NEW] 특정 환자의 의사 소견 조회 (내가 쓴 것 뿐만 아니라 히스토리 전체)
+    public List<DoctorNote> getPatientDoctorNotes(Long patientId) {
+        return medicalRepo.findNotesByPatient(patientId);
     }
 
     // [DTO 수정] assignmentId 필드 추가

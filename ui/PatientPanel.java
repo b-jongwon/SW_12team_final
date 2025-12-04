@@ -2,23 +2,24 @@ package ui;
 
 import presentation.controller.PatientController;
 import presentation.controller.ReportController;
-import presentation.controller.AssignmentController; // [추가]
+import presentation.controller.AssignmentController;
 import domain.user.User;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
 import domain.patient.GroupComparisonResult;
-import domain.patient.PatientAssignment; // [추가]
+import domain.patient.PatientAssignment;
+import domain.service.AssignmentService.ConnectionSummary;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
 public class PatientPanel extends JPanel {
 
-    // 컨트롤러들 (DI 적용 전이라 직접 생성)
     private final PatientController patientController = new PatientController();
     private final ReportController reportController = new ReportController();
-    private final AssignmentController assignmentController = new AssignmentController(); // [추가]
+    private final AssignmentController assignmentController = new AssignmentController();
 
     private User user;
 
@@ -27,7 +28,7 @@ public class PatientPanel extends JPanel {
         setLayout(new BorderLayout());
 
         // ==========================================
-        // 1. 상단: 데이터 입력 버튼 (공통)
+        // 1. 상단: 데이터 입력 버튼
         // ==========================================
         JPanel topPanel = new JPanel();
         JButton addRecordBtn = new JButton("➕ 오늘의 건강 데이터 입력하기");
@@ -37,36 +38,33 @@ public class PatientPanel extends JPanel {
         add("North", topPanel);
 
         // ==========================================
-        // 2. 중앙: 탭 패널 (기능별 조회 분리)
+        // 2. 중앙: 탭 패널
         // ==========================================
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // 탭 1: 나의 건강 기록 (Raw Data)
-        JPanel historyPanel = createHistoryPanel();
-        tabbedPane.addTab("📋 건강 기록 조회", historyPanel);
+        // 탭 1: 건강 기록
+        tabbedPane.addTab("📋 건강 기록 조회", createHistoryPanel());
 
-        // 탭 2: 뇌졸중 및 합병증 위험도 (Risk Analysis)
-        JPanel riskPanel = createRiskPanel();
-        tabbedPane.addTab("⚠️ 위험도 분석 결과", riskPanel);
+        // 탭 2: 위험도 분석
+        tabbedPane.addTab("⚠️ 위험도 분석 결과", createRiskPanel());
 
-        // 탭 3: 또래 평균 비교 (Report)
-        JPanel comparePanel = createComparePanel();
-        tabbedPane.addTab("📊 또래 평균 비교", comparePanel);
+        // 탭 3: 또래 평균 비교
+        tabbedPane.addTab("📊 또래 평균 비교", createComparePanel());
 
-        // 탭 4: 연결 관리 (Assignment) [NEW]
-        JPanel connectionPanel = createConnectionPanel();
-        tabbedPane.addTab("🔗 주치의/보호자 연결", connectionPanel);
+        // 탭 4: 연결 관리
+        tabbedPane.addTab("🔗 주치의/보호자 연결", createConnectionPanel());
+
+        // 탭 5: [NEW] 진료 및 예약 내역 (위치 수정됨!)
+        tabbedPane.addTab("🏥 진료 및 예약", createMedicalPanel());
 
         add("Center", tabbedPane);
 
-        // ==========================================
-        // [이벤트] 건강 기록 입력 (다이얼로그)
-        // ==========================================
+        // 이벤트 리스너
         addRecordBtn.addActionListener(e -> openInputDialog());
     }
 
     // ---------------------------------------------------------
-    // 탭 1: 건강 기록 조회 패널 구현
+    // 탭 1: 건강 기록 조회 패널
     // ---------------------------------------------------------
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -75,16 +73,13 @@ public class PatientPanel extends JPanel {
         output.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
         JButton refreshBtn = new JButton("목록 새로고침");
-
         refreshBtn.addActionListener(e -> {
             List<HealthRecord> list = patientController.getRecords(user.getId());
             output.setText("=== 📋 나의 건강 기록 히스토리 ===\n\n");
-            if (list.isEmpty()) {
-                output.append("아직 입력된 기록이 없습니다.\n");
-            } else {
+            if (list.isEmpty()) output.append("아직 입력된 기록이 없습니다.\n");
+            else {
                 for (HealthRecord r : list) {
-                    output.append(r.summary() + "\n");
-                    output.append("--------------------------------------------------\n");
+                    output.append(r.summary() + "\n--------------------------------------------------\n");
                 }
             }
         });
@@ -95,25 +90,20 @@ public class PatientPanel extends JPanel {
     }
 
     // ---------------------------------------------------------
-    // 탭 2: 위험도 분석 결과 조회 패널 구현
+    // 탭 2: 위험도 분석 결과 패널
     // ---------------------------------------------------------
     private JPanel createRiskPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         JTextArea output = new JTextArea();
         output.setEditable(false);
-        output.setForeground(new Color(150, 50, 0)); // 경고색
+        output.setForeground(new Color(150, 50, 0));
 
         JButton checkBtn = new JButton("내 위험도 확인하기");
-
         checkBtn.addActionListener(e -> {
-            // PatientCareService가 자동으로 생성한 RiskAssessment 조회
             List<RiskAssessment> risks = patientController.getRisk(user.getId());
-
             output.setText("=== ⚠️ 뇌졸중 위험도 분석 리포트 ===\n\n");
-            if (risks.isEmpty()) {
-                output.append("분석된 데이터가 없습니다. 먼저 건강 기록을 입력해주세요.\n");
-            } else {
-                // 가장 최신 것 하나만 보여줌
+            if (risks.isEmpty()) output.append("분석된 데이터가 없습니다.\n");
+            else {
                 RiskAssessment latest = risks.get(risks.size() - 1);
                 output.append("최종 분석 일시: " + latest.getAssessedAt() + "\n");
                 output.append("위험 레벨: [" + latest.getRiskLevel() + "]\n");
@@ -128,7 +118,7 @@ public class PatientPanel extends JPanel {
     }
 
     // ---------------------------------------------------------
-    // 탭 3: 또래 평균 비교 패널 구현 (ReportController 사용)
+    // 탭 3: 또래 평균 비교 패널
     // ---------------------------------------------------------
     private JPanel createComparePanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -136,7 +126,6 @@ public class PatientPanel extends JPanel {
         output.setEditable(false);
 
         JButton loadBtn = new JButton("또래 비교 리포트 보기");
-        // 테스트를 위해 강제로 리포트 생성하는 버튼 (실제로는 서버가 배치로 돌림)
         JButton createTestBtn = new JButton("비교 분석 요청 (테스트용)");
 
         JPanel btnPanel = new JPanel();
@@ -146,9 +135,8 @@ public class PatientPanel extends JPanel {
         loadBtn.addActionListener(e -> {
             List<GroupComparisonResult> groups = reportController.getGroup(user.getId());
             output.setText("=== 📊 또래 그룹 비교 분석 ===\n\n");
-            if (groups.isEmpty()) {
-                output.append("생성된 비교 리포트가 없습니다.\n");
-            } else {
+            if (groups.isEmpty()) output.append("생성된 비교 리포트가 없습니다.\n");
+            else {
                 for (GroupComparisonResult g : groups) {
                     output.append("[그룹: " + g.getGroupKey() + "]\n");
                     output.append("나의 수치: " + g.getPatientMetric() + "\n");
@@ -158,10 +146,9 @@ public class PatientPanel extends JPanel {
             }
         });
 
-        // [테스트 기능] 버튼을 누르면 가상의 비교 데이터를 생성해줌
         createTestBtn.addActionListener(e -> {
             reportController.createGroup(user.getId(), "40대 남성 평균", 135.0, 120.0, "GraphData");
-            JOptionPane.showMessageDialog(this, "비교 분석이 완료되었습니다. '보기' 버튼을 눌러주세요.");
+            JOptionPane.showMessageDialog(this, "비교 분석 완료.");
         });
 
         panel.add(btnPanel, BorderLayout.NORTH);
@@ -170,77 +157,108 @@ public class PatientPanel extends JPanel {
     }
 
     // ---------------------------------------------------------
-    // 탭 4: 주치의/보호자 연결 패널 구현 [NEW]
+    // 탭 4: 주치의/보호자 연결 패널
     // ---------------------------------------------------------
     private JPanel createConnectionPanel() {
-        JPanel panel = new JPanel(null); // 자유 배치
+        JPanel panel = new JPanel(new BorderLayout());
 
-        JLabel infoLabel = new JLabel("담당 주치의와 보호자의 로그인 ID를 입력하여 연결하세요.");
-        infoLabel.setBounds(20, 20, 400, 30);
-        panel.add(infoLabel);
+        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("새로운 연결 신청"));
 
-        // 의사 입력
-        JLabel docLabel = new JLabel("👨‍⚕️ 주치의 ID:");
-        docLabel.setBounds(20, 70, 100, 30);
         JTextField docField = new JTextField();
-        docField.setBounds(130, 70, 150, 30);
-        panel.add(docLabel);
-        panel.add(docField);
-
-        // 보호자 입력
-        JLabel careLabel = new JLabel("🏡 보호자 ID:");
-        careLabel.setBounds(20, 120, 100, 30);
         JTextField careField = new JTextField();
-        careField.setBounds(130, 120, 150, 30);
-        panel.add(careLabel);
-        panel.add(careField);
+        JButton connectBtn = new JButton("신청하기");
 
-        // 연결 버튼
-        JButton connectBtn = new JButton("연결 신청");
-        connectBtn.setBounds(130, 170, 150, 40);
-        panel.add(connectBtn);
+        inputPanel.add(new JLabel("👨‍⚕️ 주치의 ID:")); inputPanel.add(docField);
+        inputPanel.add(new JLabel("🏡 보호자 ID:")); inputPanel.add(careField);
+        inputPanel.add(new JLabel("")); inputPanel.add(connectBtn);
 
-        // 결과 출력
-        JTextArea statusArea = new JTextArea();
-        statusArea.setEditable(false);
-        statusArea.setBounds(20, 230, 400, 100);
-        statusArea.setBorder(BorderFactory.createTitledBorder("연결 상태"));
-        panel.add(statusArea);
+        panel.add(inputPanel, BorderLayout.NORTH);
 
-        // 버튼 클릭 시 연결 시도
-        connectBtn.addActionListener(e -> {
-            String docId = docField.getText().trim();
-            String careId = careField.getText().trim();
+        String[] cols = {"구분", "이름(ID)", "현재 상태"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createTitledBorder("📋 내 연결 현황"));
 
-            if (docId.isEmpty() && careId.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "적어도 하나의 ID는 입력해주세요.");
-                return;
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        JButton refreshBtn = new JButton("현황 새로고침");
+        panel.add(refreshBtn, BorderLayout.SOUTH);
+
+        Runnable loadStatus = () -> {
+            model.setRowCount(0);
+            List<ConnectionSummary> list = assignmentController.getStatus(user.getId());
+            for (ConnectionSummary s : list) {
+                model.addRow(new Object[]{s.getRole(), s.getName(), s.getStatus()});
             }
+        };
 
+        refreshBtn.addActionListener(e -> loadStatus.run());
+
+        connectBtn.addActionListener(e -> {
             try {
-                // [수정됨] connectDoctorAndCaregiver -> requestConnection
-                // 이제 "저장되었습니다"가 아니라 "신청되었습니다"가 더 정확한 표현입니다.
-                PatientAssignment result = assignmentController.requestConnection(user.getId(), docId, careId);
-
-                JOptionPane.showMessageDialog(this, "연결 신청이 전송되었습니다! (상대방의 수락 대기 중)");
-
-                statusArea.setText("⏳ 연결 신청 대기 중 (PENDING)...\n");
-                if (result.getDoctorId() != null) statusArea.append("- 주치의 ID: " + result.getDoctorId() + "\n");
-                if (result.getCaregiverId() != null) statusArea.append("- 보호자 ID: " + result.getCaregiverId() + "\n");
-
-            } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage());
+                assignmentController.requestConnection(user.getId(), docField.getText().trim(), careField.getText().trim());
+                JOptionPane.showMessageDialog(this, "신청되었습니다! (대기 중)");
+                docField.setText(""); careField.setText("");
+                loadStatus.run();
             } catch (Exception ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "알 수 없는 오류가 발생했습니다.");
+                JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage());
             }
         });
 
+        loadStatus.run();
         return panel;
     }
 
+    // ---------------------------------------------------------
+    // [NEW] 탭 5: 진료 및 예약 내역 패널
+    // ---------------------------------------------------------
+    private JPanel createMedicalPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 1, 10, 10));
+
+        // 1. 의사 소견 테이블
+        String[] noteCols = {"작성일", "소견 내용"};
+        DefaultTableModel noteModel = new DefaultTableModel(noteCols, 0);
+        JTable noteTable = new JTable(noteModel);
+        JScrollPane noteScroll = new JScrollPane(noteTable);
+        noteScroll.setBorder(BorderFactory.createTitledBorder("📝 의사 선생님의 소견"));
+
+        // 2. 검사 예약 테이블
+        String[] examCols = {"예약 일시", "검사 내용", "상태"};
+        DefaultTableModel examModel = new DefaultTableModel(examCols, 0);
+        JTable examTable = new JTable(examModel);
+        JScrollPane examScroll = new JScrollPane(examTable);
+        examScroll.setBorder(BorderFactory.createTitledBorder("📅 잡혀있는 검사 일정"));
+
+        panel.add(noteScroll);
+        panel.add(examScroll);
+
+        // 3. 하단 새로고침 버튼
+        JButton refreshBtn = new JButton("내역 새로고침");
+
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.add(panel, BorderLayout.CENTER);
+        wrapper.add(refreshBtn, BorderLayout.SOUTH);
+
+        Runnable loadData = () -> {
+            noteModel.setRowCount(0);
+            var notes = patientController.getMyNotes(user.getId());
+            for (var n : notes) noteModel.addRow(new Object[]{n.getCreatedAt(), n.getContent()});
+
+            examModel.setRowCount(0);
+            var exams = patientController.getMyExams(user.getId());
+            for (var e : exams) examModel.addRow(new Object[]{e.getExamDate(), e.getDescription(), e.getStatus()});
+        };
+
+        refreshBtn.addActionListener(e -> loadData.run());
+        loadData.run();
+
+        return wrapper;
+    }
+
     // ==========================================
-    // [헬퍼] 입력 다이얼로그 (팝업창)
+    // [헬퍼] 입력 다이얼로그
     // ==========================================
     private void openInputDialog() {
         JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
@@ -282,7 +300,7 @@ public class PatientPanel extends JPanel {
                 double weight = Double.parseDouble(weightField.getText().trim());
 
                 patientController.addRecord(user.getId(), sys, dia, sugar, smoking, drinking, activity, riskFactors, height, weight);
-                JOptionPane.showMessageDialog(this, "저장 및 분석 완료! 각 탭에서 결과를 확인하세요.");
+                JOptionPane.showMessageDialog(this, "저장 및 분석 완료!");
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "입력 오류: " + ex.getMessage());
             }

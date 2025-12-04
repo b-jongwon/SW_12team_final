@@ -5,12 +5,13 @@ import domain.patient.PersonalReport;
 import domain.patient.GroupComparisonResult;
 import domain.messaging.Message;
 import domain.community.CommunityPost;
-
+import java.io.File;
 
 public class Main {
 
     public static void main(String[] args) {
 
+        clearAllData();
         System.out.println("===== Stroke Prevention System Test Start =====");
 
         // --- Controllers ---
@@ -110,5 +111,22 @@ public class Main {
         // 전체 종료
         // -------------------------
         System.out.println("===== All tests finished! =====");
+    }
+    public static void clearAllData() {
+        File dataDir = new File("data");
+        if (!dataDir.exists()) {
+            return; // 폴더가 없으면 삭제할 것도 없음
+        }
+
+        File[] files = dataDir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                // json 파일과 id 관리용 txt 파일만 골라서 삭제
+                if (file.getName().endsWith(".json") || file.getName().endsWith(".txt")) {
+                    file.delete();
+                }
+            }
+        }
+        System.out.println("🧹 [System] 기존 데이터 파일들을 모두 삭제했습니다.");
     }
 }

@@ -53,6 +53,22 @@ public class AssignmentRepository {
     public List<PatientAssignment> findAll() {
         return assignRepo.findAll();
     }
+    public void updateAssignment(PatientAssignment updated) {
+        // 1. 전체 리스트 불러오기
+        List<PatientAssignment> allList = assignRepo.findAll();
+
+        // 2. 리스트를 돌면서 ID가 똑같은 녀석을 찾음
+        for (int i = 0; i < allList.size(); i++) {
+            if (allList.get(i).getId().equals(updated.getId())) {
+                // 3. 찾았다! 그 자리에 새로운 정보(ACCEPTED/REJECTED 된 것)로 교체
+                allList.set(i, updated);
+                break;
+            }
+        }
+
+        // 4. 리스트 통째로 다시 파일에 덮어쓰기 (이제 saveAll이 public이라 가능)
+        assignRepo.saveAll(allList);
+    }
     // Reminder
     public ReminderSetting saveReminder(ReminderSetting r) {
         r.setId(IdGenerator.nextId("reminder"));

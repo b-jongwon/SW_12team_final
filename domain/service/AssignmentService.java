@@ -7,6 +7,7 @@ import domain.patient.ReminderSetting;
 import domain.patient.NotificationRule;
 import domain.user.User;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,8 +16,7 @@ public class AssignmentService {
     private final AssignmentRepository repo = new AssignmentRepository();
     private final UserRepository userRepo = new UserRepository();
 
-    // =================================================================
-    // [수정] 로그인 ID로 배정 '신청' (중복 방지 로직 추가됨)
+    // [수정] 로그인 ID로 배정 '신청' (주치의 1명 제한 로직 강화)
     // =================================================================
     public PatientAssignment requestConnection(Long patientId, String docLoginId, String careLoginId) {
         Long doctorId = null;
@@ -31,7 +31,6 @@ public class AssignmentService {
                 throw new IllegalArgumentException("존재하지 않는 의사 ID입니다: " + docLoginId);
             }
         }
-
         if (careLoginId != null && !careLoginId.isEmpty()) {
             Optional<User> care = userRepo.findByLoginId(careLoginId);
             if (care.isPresent() && "CAREGIVER".equals(care.get().getRole())) {
@@ -41,68 +40,123 @@ public class AssignmentService {
             }
         }
 
-        // -------------------------------------------------------------
-        // 2. [NEW] 중복 검사 로직
-        // -------------------------------------------------------------
-        // 해당 환자의 기존 배정 기록을 모두 가져옵니다.
-        List<PatientAssignment> existingList = repo.getAssignments(patientId);
+        // 환자의 모든 배정 목록 가져오기
+        List<PatientAssignment> myAssignments = repo.getAssignments(patientId);
 
-        for (PatientAssignment a : existingList) {
-            boolean sameDoctor = (doctorId != null && doctorId.equals(a.getDoctorId()));
-            boolean sameCaregiver = (caregiverId != null && caregiverId.equals(a.getCaregiverId()));
+        // -------------------------------------------------------------
+        // [검사 1] 동일 인물 중복 체크 및 재신청 처리
+        // -------------------------------------------------------------
+        for (PatientAssignment a : myAssignments) {
+            boolean sameDoc = (doctorId != null && doctorId.equals(a.getDoctorId()));
+            boolean sameCare = (caregiverId != null && caregiverId.equals(a.getCaregiverId()));
 
-            // 의사나 보호자 중 하나라도 이미 연결되어 있거나 신청 중이라면
-            if (sameDoctor || sameCaregiver) {
+            if (sameDoc || sameCare) {
+                if ("PENDING".equals(a.getStatus())) {
+                    throw new IllegalStateException("이미 해당 사용자에게 신청 후 대기 중입니다.");
+                }
                 if ("ACCEPTED".equals(a.getStatus())) {
-                    throw new IllegalStateException("이미 연결된 사용자입니다.");
-                } else if ("PENDING".equals(a.getStatus())) {
-                    throw new IllegalStateException("이미 연결 신청 대기 중입니다.");
-                } else if ("REJECTED".equals(a.getStatus())) {
-                    // 거절당했던 기록이 있으면, 다시 'PENDING'으로 상태만 바꿔서 재신청 처리
+                    throw new IllegalStateException("이미 해당 사용자와 연결되어 있습니다.");
+                }
+                if ("REJECTED".equals(a.getStatus())) {
+                    // 거절당했던 기록이 있으면 -> PENDING으로 상태 변경하여 재신청
                     a.setStatus("PENDING");
-                    return repo.saveAssignment(a); // 업데이트 후 리턴
+                    repo.updateAssignment(a);
+                    return a;
                 }
             }
         }
 
-        // 3. 중복이 없으면 새로 생성 (PENDING)
+        // -------------------------------------------------------------
+        // [검사 2] 주치의 유일성 체크 (이미 다른 의사가 있는지 확인)
+        // -------------------------------------------------------------
+        if (doctorId != null) {
+            for (PatientAssignment a : myAssignments) {
+                // 내 배정 목록 중에 '의사'가 포함된 기록이 있는데
+                if (a.getDoctorId() != null) {
+                    // 그게 수락되었거나 대기 중이라면 -> 다른 의사 추가 불가!
+                    if ("ACCEPTED".equals(a.getStatus())) {
+                        throw new IllegalStateException("이미 주치의가 배정되어 있습니다. (1명만 가능)");
+                    }
+                    if ("PENDING".equals(a.getStatus())) {
+                        throw new IllegalStateException("현재 주치의 연결 심사 대기 중입니다. 완료 후 다시 시도하세요.");
+                    }
+                }
+            }
+        }
+
+        // 3. 문제 없으면 새로 생성 (PENDING)
         PatientAssignment request = new PatientAssignment();
         request.requestConnection(patientId, doctorId, caregiverId);
-
         return repo.saveAssignment(request);
     }
 
-    // [NEW] 신청 수락/거절 처리
-    public void processRequest(Long assignmentId, boolean isAccepted) {
-        // 리포지토리에서 해당 배정 건을 찾아서 상태 변경 (이 기능은 Repository에 findById가 필요함)
-        // 일단 구조만 잡아두고 다음 단계에서 구현
+    // 2. [누락된 메서드 추가] 환자 연결 현황 조회
+    public List<ConnectionSummary> getConnectionStatus(Long patientId) {
+        List<ConnectionSummary> result = new ArrayList<>();
+        List<PatientAssignment> list = repo.getAssignments(patientId);
+
+        for (PatientAssignment a : list) {
+            String role = "";
+            String name = "알수없음";
+
+            // [수정 포인트] final 변수로 만들기 위해 여기서 값을 확정
+            final Long finalTargetId;
+
+            if (a.getDoctorId() != null) {
+                role = "주치의";
+                finalTargetId = a.getDoctorId();
+            } else if (a.getCaregiverId() != null) {
+                role = "보호자";
+                finalTargetId = a.getCaregiverId();
+            } else {
+                finalTargetId = null;
+            }
+
+            if (finalTargetId != null) {
+                // 이제 finalTargetId는 값이 안 바뀌므로 람다에서 사용 가능!
+                Optional<User> u = userRepo.findAll().stream()
+                        .filter(user -> user.getId().equals(finalTargetId))
+                        .findFirst();
+
+                if (u.isPresent()) {
+                    name = u.get().getName() + " (" + u.get().getLoginId() + ")";
+                }
+            }
+
+            result.add(new ConnectionSummary(role, name, a.getStatus()));
+        }
+        return result;
     }
 
-    // --- 기존 메서드 (테스트 데이터 생성용, 바로 수락) ---
+    // 기존 메서드들 유지...
     public PatientAssignment assignPatient(Long pid, Long doctorId, Long caregiverId) {
         PatientAssignment a = new PatientAssignment();
-        a.assign(pid, doctorId, caregiverId); // ACCEPTED 상태
+        a.assign(pid, doctorId, caregiverId);
         return repo.saveAssignment(a);
     }
-
-    // ... (나머지 getAssignments 등 기존 메서드 유지) ...
-    public List<PatientAssignment> getAssignments(Long pid) {
-        return repo.getAssignments(pid);
-    }
+    public List<PatientAssignment> getAssignments(Long pid) { return repo.getAssignments(pid); }
     public ReminderSetting createReminder(Long pid, String type, String rule, String msg) {
-        ReminderSetting r = new ReminderSetting();
-        r.create(pid, type, rule, msg);
-        return repo.saveReminder(r);
+        ReminderSetting r = new ReminderSetting(); r.create(pid, type, rule, msg); return repo.saveReminder(r);
     }
-    public List<ReminderSetting> getReminders(Long pid) {
-        return repo.getReminders(pid);
-    }
+    public List<ReminderSetting> getReminders(Long pid) { return repo.getReminders(pid); }
     public NotificationRule createRule(Long pid, String cond, String act) {
-        NotificationRule n = new NotificationRule();
-        n.configure(pid, cond, act);
-        return repo.saveRule(n);
+        NotificationRule n = new NotificationRule(); n.configure(pid, cond, act); return repo.saveRule(n);
     }
-    public List<NotificationRule> getRules(Long pid) {
-        return repo.getRules(pid);
+    public List<NotificationRule> getRules(Long pid) { return repo.getRules(pid); }
+
+    // [DTO 클래스]
+    public static class ConnectionSummary {
+        private String role;
+        private String name;
+        private String status;
+
+        public ConnectionSummary(String role, String name, String status) {
+            this.role = role;
+            this.name = name;
+            this.status = status;
+        }
+        public String getRole() { return role; }
+        public String getName() { return name; }
+        public String getStatus() { return status; }
     }
 }

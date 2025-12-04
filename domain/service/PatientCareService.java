@@ -102,6 +102,15 @@ public class PatientCareService {
         r.update(type, prob, rec);
         return repo.saveCompRisk(r);
     }
+    // [NEW] 내 진료 소견 목록 조회
+    public List<domain.medical.DoctorNote> getMyNotes(Long patientId) {
+        return repo.findNotesByPatient(patientId);
+    }
+
+    // [NEW] 내 검사 예약 목록 조회
+    public List<domain.medical.ScheduledExam> getMyExams(Long patientId) {
+        return repo.findExamsByPatient(patientId);
+    }
 
     public List<ComplicationRisk> getCompRisk(Long pid) {
         return repo.findCompRiskByPatient(pid);

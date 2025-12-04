@@ -32,7 +32,14 @@ public class PatientController {
                                      String level, String summary) {
         return service.createRisk(pid, score, percent, level, summary);
     }
+    public List<domain.medical.DoctorNote> getMyNotes(Long patientId) {
+        return service.getMyNotes(patientId);
+    }
 
+    // [NEW] 예약 조회
+    public List<domain.medical.ScheduledExam> getMyExams(Long patientId) {
+        return service.getMyExams(patientId);
+    }
     public List<RiskAssessment> getRisk(Long pid) {
         return service.getRisk(pid);
     }

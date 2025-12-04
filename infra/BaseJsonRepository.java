@@ -24,7 +24,7 @@ public abstract class BaseJsonRepository<T> {
         return list;
     }
 
-    protected void saveAll(List<T> list) {
+    public void saveAll(List<T> list) {
         JsonUtil.writeJson(filePath, list);
     }
 

@@ -101,8 +101,15 @@ public class DoctorPanel extends JPanel {
     // --------------------------------------------------------
     private JPanel createMyPatientPanel() {
         JPanel panel = new JPanel(new BorderLayout());
+
+        // 상단 버튼들
+        JPanel topBtn = new JPanel();
         JButton refreshBtn = new JButton("새로고침");
-        panel.add(refreshBtn, BorderLayout.NORTH);
+        JButton sortBtn = new JButton("⚠️ 위험도순 정렬"); // [NEW] 정렬 버튼
+        topBtn.add(refreshBtn);
+        topBtn.add(sortBtn);
+
+        panel.add(topBtn, BorderLayout.NORTH);
 
         String[] cols = {"ID", "이름", "상태", "DB_ID"};
         patientModel = new DefaultTableModel(cols, 0) {
@@ -110,23 +117,65 @@ public class DoctorPanel extends JPanel {
         };
         patientTable = new JTable(patientModel);
 
-        // 클릭 시 환자 선택
-        patientTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = patientTable.getSelectedRow();
-                if (row != -1) {
-                    selectedPatientId = (Long) patientModel.getValueAt(row, 3);
-                    String name = (String) patientModel.getValueAt(row, 1);
-                    noteArea.setBorder(BorderFactory.createTitledBorder("📝 " + name + "님 소견 작성"));
+        // [NEW] 더블클릭 시 상세 보기 팝업
+        patientTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) { // 더블클릭
+                    int row = patientTable.getSelectedRow();
+                    if (row != -1) {
+                        Long pId = (Long) patientModel.getValueAt(row, 3);
+                        String pName = (String) patientModel.getValueAt(row, 1);
+
+                        // 팝업창 띄우기
+                        new PatientDetailDialog(
+                                (JFrame) SwingUtilities.getWindowAncestor(DoctorPanel.this),
+                                pName, pId, controller
+                        ).setVisible(true);
+                    }
                 }
             }
         });
 
+        // 기존 클릭 리스너 (소견 작성용) 유지...
+        patientTable.getSelectionModel().addListSelectionListener(e -> { /* ... */ });
+
         panel.add(new JScrollPane(patientTable), BorderLayout.CENTER);
 
         refreshBtn.addActionListener(e -> loadMyPatients());
-        loadMyPatients(); // 초기 로드
+
+        // [NEW] 정렬 로직 구현
+        sortBtn.addActionListener(e -> sortPatientsByRisk());
+
+        loadMyPatients();
         return panel;
+    }
+
+    // [NEW] 위험도 정렬 메서드
+    private void sortPatientsByRisk() {
+        // 1. 데이터 다시 가져오기
+        List<PatientSummary> list = controller.getMyPatients(doctor.getId());
+
+        // 2. 정렬 (고위험 > 주의 > 정상 > 데이터없음 순)
+        list.sort((p1, p2) -> {
+            int score1 = getRiskScore(p1.getStatus());
+            int score2 = getRiskScore(p2.getStatus());
+            return Integer.compare(score2, score1); // 내림차순 (높은게 위로)
+        });
+
+        // 3. 테이블 갱신
+        patientModel.setRowCount(0);
+        for (PatientSummary p : list) {
+            patientModel.addRow(new Object[]{p.getLoginId(), p.getName(), p.getStatus(), p.getRealId()});
+        }
+    }
+
+    // 위험도 문자열을 점수로 변환하는 헬퍼
+    private int getRiskScore(String status) {
+        if ("고위험".equals(status)) return 3;
+        if ("주의".equals(status)) return 2;
+        if ("정상".equals(status)) return 1;
+        return 0;
     }
 
     // --------------------------------------------------------
