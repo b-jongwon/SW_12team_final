@@ -4,6 +4,7 @@ import data.repository.MedicalRepository;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
 import domain.patient.ComplicationRisk;
+import domain.patient.RiskConfiguration;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class PatientCareService {
         // 컨트롤러가 시키지 않아도, 서비스가 알아서 판단하여 위험도를 분석하고 저장함
         // =================================================================
         analyzeAndSaveRisk(patientId, savedRecord);
-
+        analyzeComplication(patientId, savedRecord);
         return savedRecord;
     }
 
@@ -76,6 +77,18 @@ public class PatientCareService {
         risk.assess(score, score, level, reason.toString());
 
         repo.saveRisk(risk);
+    }
+    private void analyzeComplication(Long patientId, HealthRecord r) {
+        double riskScore = 0;
+        // 기존 위험 요인 가중치
+        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 20;
+
+        String level = riskScore >= 50 ? "높음" : (riskScore >= 20 ? "중간" : "낮음");
+
+        ComplicationRisk comp = new ComplicationRisk();
+        comp.setPatientId(patientId);
+        comp.update("심혈관/뇌졸중", riskScore, "위험도: " + level);
+        repo.saveCompRisk(comp);
     }
 
     // --- 아래 기존 메서드들은 변경 없음 ---
