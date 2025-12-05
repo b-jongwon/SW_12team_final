@@ -10,6 +10,7 @@ import domain.patient.Alert;
 
 import com.google.gson.reflect.TypeToken;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class MessagingRepository {
@@ -33,6 +34,11 @@ public class MessagingRepository {
         return t;
     }
 
+    public Optional<MessageThread> findThreadByPatientId(Long patientId) {
+        return threadRepo.findAll().stream()
+                .filter(t -> t.getPatientId().equals(patientId))
+                .findFirst();
+    }
     public List<MessageThread> getThreadsForUser(Long userId) {
         return threadRepo.findAll().stream()
             .filter(t -> 
