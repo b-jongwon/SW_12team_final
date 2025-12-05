@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public class CommunityPost {
     private Long id;
     private Long authorId;
+    private String authorName;
     private String title;
     private String content;
     private LocalDateTime createdAt;
@@ -40,16 +41,13 @@ public class CommunityPost {
         this.createdAt = createdAt;
     }
 
-    public CommunityPost(Long id, Long authorId, String title, String content, LocalDateTime createdAt) {
-        this.id = id;
-        this.authorId = authorId;
-        this.title = title;
-        this.content = content;
-        this.createdAt = createdAt;
-    }
+    public String getAuthorName() { return authorName; }
 
-    public void create(Long authorId, String title, String content) {
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public void create(Long authorId, String title,String authorName, String content) {
         this.authorId = authorId;
+        this.authorName = authorName;
         this.title = title;
         this.content = content;
         this.createdAt = LocalDateTime.now();
