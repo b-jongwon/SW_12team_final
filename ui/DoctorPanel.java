@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter; // 날짜 포맷팅을 위해 추가
 import java.util.List;
 
 public class DoctorPanel extends JPanel {
@@ -15,14 +16,11 @@ public class DoctorPanel extends JPanel {
     private final DoctorController controller = new DoctorController();
 
     // UI 컴포넌트
-    private JTable patientTable; // 수락된 환자
-    private DefaultTableModel patientModel;
-
-    private JTable requestTable; // 대기중인 요청
+    private JTable patientTable;
+    private DefaultTableModel tableModel; // patientModel 변수명을 tableModel로 통일
+    private JTable requestTable;
     private DefaultTableModel requestModel;
-
     private JTextArea noteArea;
-    private Long selectedPatientId = null;
 
     public DoctorPanel(User doctor) {
         this.doctor = doctor;
@@ -32,6 +30,7 @@ public class DoctorPanel extends JPanel {
         JLabel titleLabel = new JLabel("👨‍⚕️ " + doctor.getName() + " 선생님의 진료실");
         titleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
         // 2. 중앙 SplitPane
@@ -48,7 +47,7 @@ public class DoctorPanel extends JPanel {
         splitPane.setLeftComponent(leftTab);
 
         // ========================================================
-        // [오른쪽] 상세 작업 (기존 코드 유지)
+        // [오른쪽] 상세 작업
         // ========================================================
         JPanel rightPanel = new JPanel(new BorderLayout());
         noteArea = new JTextArea();
@@ -67,31 +66,55 @@ public class DoctorPanel extends JPanel {
         add(splitPane, BorderLayout.CENTER);
 
         // ----------------------------------------------------
-        // [이벤트] 오른쪽 버튼 액션
+        // [이벤트] 소견 저장 버튼 (버그 수정됨)
         // ----------------------------------------------------
         saveNoteBtn.addActionListener(e -> {
-            if (selectedPatientId == null) {
-                JOptionPane.showMessageDialog(this, "담당 환자 탭에서 환자를 선택해주세요.");
+            // [핵심 수정] 변수에 의존하지 않고, 버튼 누를 때 테이블 확인
+            int row = patientTable.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "먼저 왼쪽 '담당 환자 목록' 탭에서 환자를 선택해주세요.");
                 return;
             }
+
+            // 테이블의 3번째 컬럼(DB_ID)에서 ID 직접 가져오기
+            Long targetId = (Long) tableModel.getValueAt(row, 3);
             String content = noteArea.getText().trim();
-            if (content.isEmpty()) return;
-            controller.saveNote(doctor.getId(), selectedPatientId, content);
-            JOptionPane.showMessageDialog(this, "저장되었습니다.");
+
+            if (content.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "소견 내용을 입력해주세요.");
+                return;
+            }
+
+            controller.saveNote(doctor.getId(), targetId, content);
+            JOptionPane.showMessageDialog(this, "진료 소견이 저장되었습니다.");
             noteArea.setText("");
         });
 
+        // ----------------------------------------------------
+        // [이벤트] 검사 예약 버튼 (버그 수정됨)
+        // ----------------------------------------------------
         scheduleBtn.addActionListener(e -> {
-            if (selectedPatientId == null) {
-                JOptionPane.showMessageDialog(this, "환자를 선택해주세요.");
+            int row = patientTable.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "먼저 왼쪽 '담당 환자 목록' 탭에서 환자를 선택해주세요.");
                 return;
             }
-            String dateStr = JOptionPane.showInputDialog("예약 날짜 (yyyy-MM-ddTHH:mm):");
-            if (dateStr != null) {
+
+            Long targetId = (Long) tableModel.getValueAt(row, 3);
+
+            // 날짜 입력 편의성 개선 (공백 입력 가능)
+            String dateStr = JOptionPane.showInputDialog("예약 날짜 (yyyy-MM-dd HH:mm):");
+            if (dateStr != null && !dateStr.isEmpty()) {
                 try {
-                    controller.scheduleExam(doctor.getId(), selectedPatientId, LocalDateTime.parse(dateStr), "검사");
+                    // "2025-10-25 14:30" 형식 지원
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+                    LocalDateTime date = LocalDateTime.parse(dateStr, formatter);
+
+                    controller.scheduleExam(doctor.getId(), targetId, date, "검사");
                     JOptionPane.showMessageDialog(this, "예약되었습니다.");
-                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "오류: " + ex.getMessage()); }
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "날짜 형식이 틀렸습니다. (예: 2025-10-25 14:30)");
+                }
             }
         });
     }
@@ -102,80 +125,59 @@ public class DoctorPanel extends JPanel {
     private JPanel createMyPatientPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // 상단 버튼들
+        // 상단 버튼 패널
         JPanel topBtn = new JPanel();
         JButton refreshBtn = new JButton("새로고침");
-        JButton sortBtn = new JButton("⚠️ 위험도순 정렬"); // [NEW] 정렬 버튼
+        JButton sortBtn = new JButton("⚠️ 위험도순 정렬");
         topBtn.add(refreshBtn);
         topBtn.add(sortBtn);
-
         panel.add(topBtn, BorderLayout.NORTH);
 
         String[] cols = {"ID", "이름", "상태", "DB_ID"};
-        patientModel = new DefaultTableModel(cols, 0) {
+        tableModel = new DefaultTableModel(cols, 0) { // 변수명 tableModel로 통일
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
-        patientTable = new JTable(patientModel);
+        patientTable = new JTable(tableModel);
 
-        // [NEW] 더블클릭 시 상세 보기 팝업
+        // [NEW] 더블클릭 시 상세 보기 팝업 (히스토리 보기)
         patientTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (evt.getClickCount() == 2) { // 더블클릭
-                    int row = patientTable.getSelectedRow();
-                    if (row != -1) {
-                        Long pId = (Long) patientModel.getValueAt(row, 3);
-                        String pName = (String) patientModel.getValueAt(row, 1);
+                int row = patientTable.getSelectedRow();
+                if (row != -1) {
+                    // 클릭 시 오른쪽 메모장 제목 변경 (시각적 피드백)
+                    String name = (String) tableModel.getValueAt(row, 1);
+                    noteArea.setBorder(BorderFactory.createTitledBorder("📝 " + name + "님 소견 작성"));
 
-                        // 팝업창 띄우기
+                    // 더블클릭 시 상세 팝업
+                    if (evt.getClickCount() == 2) {
+                        Long pId = (Long) tableModel.getValueAt(row, 3);
                         new PatientDetailDialog(
                                 (JFrame) SwingUtilities.getWindowAncestor(DoctorPanel.this),
-                                pName, pId, controller
+                                name, pId, controller
                         ).setVisible(true);
                     }
                 }
             }
         });
 
-        // 기존 클릭 리스너 (소견 작성용) 유지...
-        patientTable.getSelectionModel().addListSelectionListener(e -> { /* ... */ });
-
         panel.add(new JScrollPane(patientTable), BorderLayout.CENTER);
 
         refreshBtn.addActionListener(e -> loadMyPatients());
 
-        // [NEW] 정렬 로직 구현
-        sortBtn.addActionListener(e -> sortPatientsByRisk());
-
-        loadMyPatients();
-        return panel;
-    }
-
-    // [NEW] 위험도 정렬 메서드
-    private void sortPatientsByRisk() {
-        // 1. 데이터 다시 가져오기
-        List<PatientSummary> list = controller.getMyPatients(doctor.getId());
-
-        // 2. 정렬 (고위험 > 주의 > 정상 > 데이터없음 순)
-        list.sort((p1, p2) -> {
-            int score1 = getRiskScore(p1.getStatus());
-            int score2 = getRiskScore(p2.getStatus());
-            return Integer.compare(score2, score1); // 내림차순 (높은게 위로)
+        // 위험도 정렬 로직
+        sortBtn.addActionListener(e -> {
+            List<PatientSummary> list = controller.getMyPatients(doctor.getId());
+            list.sort((p1, p2) -> {
+                int s1 = getRiskScore(p1.getStatus());
+                int s2 = getRiskScore(p2.getStatus());
+                return Integer.compare(s2, s1); // 내림차순
+            });
+            updatePatientTable(list);
         });
 
-        // 3. 테이블 갱신
-        patientModel.setRowCount(0);
-        for (PatientSummary p : list) {
-            patientModel.addRow(new Object[]{p.getLoginId(), p.getName(), p.getStatus(), p.getRealId()});
-        }
-    }
-
-    // 위험도 문자열을 점수로 변환하는 헬퍼
-    private int getRiskScore(String status) {
-        if ("고위험".equals(status)) return 3;
-        if ("주의".equals(status)) return 2;
-        if ("정상".equals(status)) return 1;
-        return 0;
+        loadMyPatients(); // 초기 로드
+        return panel;
     }
 
     // --------------------------------------------------------
@@ -183,9 +185,8 @@ public class DoctorPanel extends JPanel {
     // --------------------------------------------------------
     private JPanel createRequestPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        JButton refreshBtn = new JButton("요청 새로고침");
-
         JPanel btnBox = new JPanel();
+        JButton refreshBtn = new JButton("요청 새로고침");
         JButton acceptBtn = new JButton("✅ 수락");
         JButton rejectBtn = new JButton("❌ 거절");
         btnBox.add(refreshBtn);
@@ -198,22 +199,24 @@ public class DoctorPanel extends JPanel {
         requestTable = new JTable(requestModel);
         panel.add(new JScrollPane(requestTable), BorderLayout.CENTER);
 
-        // 수락 버튼 이벤트
         acceptBtn.addActionListener(e -> processRequest(true));
         rejectBtn.addActionListener(e -> processRequest(false));
         refreshBtn.addActionListener(e -> loadRequests());
 
-        loadRequests(); // 초기 로드
+        loadRequests();
         return panel;
     }
 
     // 데이터 로드: 내 환자
     private void loadMyPatients() {
-        patientModel.setRowCount(0);
-        selectedPatientId = null;
         List<PatientSummary> list = controller.getMyPatients(doctor.getId());
+        updatePatientTable(list);
+    }
+
+    private void updatePatientTable(List<PatientSummary> list) {
+        tableModel.setRowCount(0);
         for (PatientSummary p : list) {
-            patientModel.addRow(new Object[]{p.getLoginId(), p.getName(), p.getStatus(), p.getRealId()});
+            tableModel.addRow(new Object[]{p.getLoginId(), p.getName(), p.getStatus(), p.getRealId()});
         }
     }
 
@@ -226,25 +229,27 @@ public class DoctorPanel extends JPanel {
         }
     }
 
+    // 수락/거절 처리
     private void processRequest(boolean accept) {
         int row = requestTable.getSelectedRow();
         if (row == -1) {
             JOptionPane.showMessageDialog(this, "처리할 요청을 선택해주세요.");
             return;
         }
-
-        // 테이블에서 ASSIGN_ID 가져오기
         Long assignId = (Long) requestModel.getValueAt(row, 3);
-
-        // 1. 컨트롤러 호출 (상태 변경)
         controller.reply(assignId, accept);
 
-        String msg = accept ? "✅ 수락되었습니다. 담당 환자 탭을 확인하세요." : "❌ 거절되었습니다.";
+        String msg = accept ? "수락되었습니다." : "거절되었습니다.";
         JOptionPane.showMessageDialog(this, msg);
 
-        // 2. [UI 갱신] 두 테이블 모두 새로고침
-        // (요청 목록에서는 사라지고, 수락했다면 환자 목록에는 추가됨)
-        loadRequests();   // 요청 대기열 갱신 (사라짐)
-        loadMyPatients(); // 환자 목록 갱신 (나타남)
+        loadRequests();
+        loadMyPatients();
+    }
+
+    private int getRiskScore(String status) {
+        if ("고위험".equals(status)) return 3;
+        if ("주의".equals(status)) return 2;
+        if ("정상".equals(status)) return 1;
+        return 0;
     }
 }
