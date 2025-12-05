@@ -1,10 +1,11 @@
-import presentation.controller.*;
-import domain.user.User;
+import domain.community.CommunityPost;
+import domain.messaging.Message;
+import domain.patient.GroupComparisonResult;
 import domain.patient.HealthRecord;
 import domain.patient.PersonalReport;
-import domain.patient.GroupComparisonResult;
-import domain.messaging.Message;
-import domain.community.CommunityPost;
+import domain.user.User;
+import presentation.controller.*;
+
 import java.io.File;
 
 public class Main {
