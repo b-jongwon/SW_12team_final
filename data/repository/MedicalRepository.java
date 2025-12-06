@@ -56,7 +56,10 @@ public class MedicalRepository {
                 .filter(r -> r.getPatientId().equals(pid))
                 .collect(Collectors.toList());
     }
-
+    // [NEW] 또래 비교를 위해 전체 기록 조회
+    public List<HealthRecord> findAllRecords() {
+        return healthRepo.findAll();
+    }
     // RiskAssessment
     public RiskAssessment saveRisk(RiskAssessment r) {
         r.setId(IdGenerator.nextId("risk_assess"));
