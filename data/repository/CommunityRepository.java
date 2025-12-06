@@ -1,90 +1,239 @@
-
 package data.repository;
 
+import com.google.gson.reflect.TypeToken;
+import domain.community.CommunityComment;
+import domain.community.CommunityPost;
 import domain.content.Announcement;
 import domain.content.ChecklistItem;
 import domain.content.ContentItem;
-import infra.BaseJsonRepository;
 import infra.IdGenerator;
+import infra.JsonUtil;
 
-import domain.community.*;
-
-import com.google.gson.reflect.TypeToken;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * 커뮤니티 관련 모든 엔티티(Post, Comment, Content, Checklist, Announcement)를
+ * JSON 파일로 저장/조회하는 리포지토리.
+ */
 public class CommunityRepository {
 
-    private final BaseJsonRepository<CommunityPost> postRepo =
-        new BaseJsonRepository<>("data/community_posts.json",
-            new TypeToken<List<CommunityPost>>() {}) {};
+    private static final String POST_FILE = "data/community_posts.json";
+    private static final String COMMENT_FILE = "data/community_comments.json";
+    private static final String CONTENT_FILE = "data/community_contents.json";
+    private static final String CHECKLIST_FILE = "data/community_checklist.json";
+    private static final String ANNOUNCE_FILE = "data/community_announcements.json";
 
-    private final BaseJsonRepository<CommunityComment> commentRepo =
-        new BaseJsonRepository<>("data/community_comments.json",
-            new TypeToken<List<CommunityComment>>() {}) {};
+    private static final Type POST_LIST_TYPE =
+            new TypeToken<List<CommunityPost>>() {}.getType();
+    private static final Type COMMENT_LIST_TYPE =
+            new TypeToken<List<CommunityComment>>() {}.getType();
+    private static final Type CONTENT_LIST_TYPE =
+            new TypeToken<List<ContentItem>>() {}.getType();
+    private static final Type CHECKLIST_LIST_TYPE =
+            new TypeToken<List<ChecklistItem>>() {}.getType();
+    private static final Type ANNOUNCE_LIST_TYPE =
+            new TypeToken<List<Announcement>>() {}.getType();
 
-    private final BaseJsonRepository<ContentItem> contentRepo =
-        new BaseJsonRepository<>("data/content_items.json",
-            new TypeToken<List<ContentItem>>() {}) {};
+    // ---------- Post ----------
 
-    private final BaseJsonRepository<ChecklistItem> checklistRepo =
-        new BaseJsonRepository<>("data/checklist_items.json",
-            new TypeToken<List<ChecklistItem>>() {}) {};
+    private List<CommunityPost> loadPosts() {
+        List<CommunityPost> list = JsonUtil.readJson(POST_FILE, POST_LIST_TYPE);
+        return list != null ? list : new ArrayList<>();
+    }
 
-    private final BaseJsonRepository<Announcement> announcementRepo =
-        new BaseJsonRepository<>("data/announcements.json",
-            new TypeToken<List<Announcement>>() {}) {};
-
-    // Post
-    public CommunityPost savePost(CommunityPost p) {
-        p.setId(IdGenerator.nextId("post"));
-        postRepo.save(p);
-        return p;
+    private void savePosts(List<CommunityPost> list) {
+        JsonUtil.writeJson(POST_FILE, list);
     }
 
     public List<CommunityPost> getPosts() {
-        return postRepo.findAll();
+        return loadPosts();
     }
 
-    // Comment
-    public CommunityComment saveComment(CommunityComment c) {
-        c.setId(IdGenerator.nextId("comment"));
-        commentRepo.save(c);
-        return c;
+    public CommunityPost savePost(CommunityPost post) {
+        List<CommunityPost> list = loadPosts();
+        if (post.getId() == null) {
+            post.setId(IdGenerator.nextId("post"));
+            list.add(post);
+        } else {
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getId().equals(post.getId())) {
+                    list.set(i, post);
+                    updated = true;
+                    break;
+                }
+            }
+            if (!updated) list.add(post);
+        }
+        savePosts(list);
+        return post;
+    }
+
+    public CommunityPost findPostById(Long id) {
+        return loadPosts().stream()
+                .filter(p -> p.getId().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    public void deletePost(Long id) {
+        List<CommunityPost> list = loadPosts();
+        list.removeIf(p -> p.getId().equals(id));
+        savePosts(list);
+    }
+
+    // ---------- Comment ----------
+
+    private List<CommunityComment> loadComments() {
+        List<CommunityComment> list = JsonUtil.readJson(COMMENT_FILE, COMMENT_LIST_TYPE);
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private void saveComments(List<CommunityComment> list) {
+        JsonUtil.writeJson(COMMENT_FILE, list);
     }
 
     public List<CommunityComment> getComments(Long postId) {
-        return commentRepo.findAll().stream()
-            .filter(c -> c.getPostId().equals(postId))
-            .collect(Collectors.toList());
+        List<CommunityComment> all = loadComments();
+        List<CommunityComment> result = new ArrayList<>();
+        for (CommunityComment c : all) {
+            if (c.getPostId().equals(postId)) {
+                result.add(c);
+            }
+        }
+        return result;
     }
 
-    // Content
+    public CommunityComment saveComment(CommunityComment comment) {
+        List<CommunityComment> list = loadComments();
+        if (comment.getId() == null) {
+            comment.setId(IdGenerator.nextId("comment"));
+            list.add(comment);
+        } else {
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getId().equals(comment.getId())) {
+                    list.set(i, comment);
+                    updated = true;
+                    break;
+                }
+            }
+            if (!updated) list.add(comment);
+        }
+        saveComments(list);
+        return comment;
+    }
+
+    public void deleteCommentsByPostId(Long postId) {
+        List<CommunityComment> list = loadComments();
+        list.removeIf(c -> c.getPostId().equals(postId));
+        saveComments(list);
+    }
+
+    // ---------- Content ----------
+
+    private List<ContentItem> loadContents() {
+        List<ContentItem> list = JsonUtil.readJson(CONTENT_FILE, CONTENT_LIST_TYPE);
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private void saveContents(List<ContentItem> list) {
+        JsonUtil.writeJson(CONTENT_FILE, list);
+    }
+
+    public List<ContentItem> getContents() {
+        return loadContents();
+    }
+
     public ContentItem saveContent(ContentItem item) {
-        item.setId(IdGenerator.nextId("content_item"));
-        contentRepo.save(item);
+        List<ContentItem> list = loadContents();
+        if (item.getId() == null) {
+            item.setId(IdGenerator.nextId("content"));
+            list.add(item);
+        } else {
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getId().equals(item.getId())) {
+                    list.set(i, item);
+                    updated = true;
+                    break;
+                }
+            }
+            if (!updated) list.add(item);
+        }
+        saveContents(list);
         return item;
     }
 
-    public List<ContentItem> getContents() { return contentRepo.findAll(); }
+    // ---------- Checklist ----------
 
-    // Checklist
+    private List<ChecklistItem> loadChecklist() {
+        List<ChecklistItem> list = JsonUtil.readJson(CHECKLIST_FILE, CHECKLIST_LIST_TYPE);
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private void saveChecklist(List<ChecklistItem> list) {
+        JsonUtil.writeJson(CHECKLIST_FILE, list);
+    }
+
+    public List<ChecklistItem> getChecklist() {
+        return loadChecklist();
+    }
+
     public ChecklistItem saveChecklist(ChecklistItem item) {
-        item.setId(IdGenerator.nextId("checklist"));
-        checklistRepo.save(item);
+        List<ChecklistItem> list = loadChecklist();
+        if (item.getId() == null) {
+            item.setId(IdGenerator.nextId("checklist"));
+            list.add(item);
+        } else {
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getId().equals(item.getId())) {
+                    list.set(i, item);
+                    updated = true;
+                    break;
+                }
+            }
+            if (!updated) list.add(item);
+        }
+        saveChecklist(list);
         return item;
     }
 
-    public List<ChecklistItem> getChecklist() { return checklistRepo.findAll(); }
+    // ---------- Announcement ----------
 
-    // Announcement
-    public Announcement saveAnnouncement(Announcement a) {
-        a.setId(IdGenerator.nextId("announcement"));
-        announcementRepo.save(a);
-        return a;
+    private List<Announcement> loadAnnouncements() {
+        List<Announcement> list = JsonUtil.readJson(ANNOUNCE_FILE, ANNOUNCE_LIST_TYPE);
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private void saveAnnouncements(List<Announcement> list) {
+        JsonUtil.writeJson(ANNOUNCE_FILE, list);
     }
 
     public List<Announcement> getAnnouncements() {
-        return announcementRepo.findAll();
+        return loadAnnouncements();
+    }
+
+    public Announcement saveAnnouncement(Announcement item) {
+        List<Announcement> list = loadAnnouncements();
+        if (item.getId() == null) {
+            item.setId(IdGenerator.nextId("announcement"));
+            list.add(item);
+        } else {
+            boolean updated = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i).getId().equals(item.getId())) {
+                    list.set(i, item);
+                    updated = true;
+                    break;
+                }
+            }
+            if (!updated) list.add(item);
+        }
+        saveAnnouncements(list);
+        return item;
     }
 }

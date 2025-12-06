@@ -1,11 +1,12 @@
-
 package domain.service;
 
 import data.repository.CommunityRepository;
-import domain.community.*;
+import domain.community.CommunityComment;
+import domain.community.CommunityPost;
 import domain.content.Announcement;
 import domain.content.ChecklistItem;
 import domain.content.ContentItem;
+import domain.user.User;
 
 import java.util.List;
 
@@ -21,6 +22,10 @@ public class CommunityService {
 
     public List<CommunityPost> getPosts() {
         return repo.getPosts();
+    }
+
+    public CommunityPost getPost(Long postId) {
+        return repo.findPostById(postId);
     }
 
     public CommunityComment addComment(Long postId, Long authorId, String content) {
@@ -61,5 +66,30 @@ public class CommunityService {
 
     public List<Announcement> getAnnouncements() {
         return repo.getAnnouncements();
+    }
+
+    /**
+     * 게시글 삭제 비즈니스 로직
+     * - 작성자 본인은 삭제 가능
+     * - ADMIN 은 모든 글 삭제 가능
+     */
+    public boolean deletePost(Long postId, User requester) {
+        CommunityPost post = repo.findPostById(postId);
+        if (post == null) return false;
+
+        String role = requester.getRole();
+        Long requesterId = requester.getId();
+
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(role);
+        boolean isAuthor = post.getAuthorId() != null &&
+                post.getAuthorId().equals(requesterId);
+
+        if (!isAdmin && !isAuthor) {
+            return false;
+        }
+
+        repo.deletePost(postId);
+        repo.deleteCommentsByPostId(postId);
+        return true;
     }
 }
