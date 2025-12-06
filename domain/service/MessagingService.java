@@ -12,10 +12,15 @@ public class MessagingService {
 
     private final MessagingRepository repo = new MessagingRepository();
 
-    public MessageThread createThread(Long patientId, Long caregiverId, Long doctorId) {
-        MessageThread t = new MessageThread();
-        t.create(patientId, caregiverId, doctorId);
-        return repo.createThread(t);
+    public MessageThread getOrCreatePatientRoom(Long patientId) {
+        // 1. 해당 환자의 방이 이미 존재하는지 DB에서 조회
+        return repo.findThreadByPatientId(patientId)
+                .orElseGet(() -> {
+                    // 2. 없으면 새로 생성 (참여자는 환자 본인 ID만 기록, 의사/보호자는 동적으로 참여)
+                    MessageThread newThread = new MessageThread();
+                    newThread.create(patientId);
+                    return repo.createThread(newThread);
+                });
     }
 
     public Message sendMessage(Long threadId, Long senderId, String content) {

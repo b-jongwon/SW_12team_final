@@ -13,7 +13,7 @@ public class MessagingController {
     private final MessagingService service = new MessagingService();
 
     public MessageThread createThread(Long patientId, Long caregiverId, Long doctorId) {
-        return service.createThread(patientId, caregiverId, doctorId);
+        return service.getOrCreatePatientRoom(patientId); //임시로 이렇게 해둠
     }
 
     public Message send(Long threadId, Long senderId, String msg) {

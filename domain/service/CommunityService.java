@@ -3,6 +3,7 @@ package domain.service;
 
 import data.repository.CommunityRepository;
 import domain.community.*;
+import domain.user.User;
 import domain.content.Announcement;
 import domain.content.ChecklistItem;
 import domain.content.ContentItem;
