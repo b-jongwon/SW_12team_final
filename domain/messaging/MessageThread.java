@@ -36,10 +36,8 @@ public class MessageThread {
         this.createdAt = createdAt;
     }
 
-    public void create(Long patientId, Long caregiverId, Long doctorId) {
+    public void create(Long patientId) {
         this.patientId = patientId;
-        this.caregiverId = caregiverId;
-        this.doctorId = doctorId;
         this.createdAt = LocalDateTime.now();
     }
 
