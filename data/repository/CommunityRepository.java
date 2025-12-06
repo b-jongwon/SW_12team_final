@@ -64,6 +64,13 @@ public class CommunityRepository {
             .collect(Collectors.toList());
     }
 
+    public CommunityPost findPostById(Long postId) {
+        return postRepo.findAll().stream()
+                .filter(p -> p.getId().equals(postId))
+                .findFirst()
+                .orElse(null);
+    }
+
     // Content
     public ContentItem saveContent(ContentItem item) {
         item.setId(IdGenerator.nextId("content_item"));
