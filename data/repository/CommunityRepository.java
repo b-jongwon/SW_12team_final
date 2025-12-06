@@ -46,6 +46,11 @@ public class CommunityRepository {
         return postRepo.findAll();
     }
 
+    // [NEW] 삭제 후 갱신된 리스트를 저장하기 위함
+    public void saveAllPosts(List<CommunityPost> posts) {
+        postRepo.saveAll(posts);
+    }
+
     // Comment
     public CommunityComment saveComment(CommunityComment c) {
         c.setId(IdGenerator.nextId("comment"));
