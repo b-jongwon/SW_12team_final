@@ -101,7 +101,7 @@ public class Main {
         // -------------------------
         // 7. 커뮤니티 시스템
         // -------------------------
-        CommunityPost post = community.post(p1.getId(), "오늘 운동 인증!", "조깅 3km 뛰었습니다!");
+        CommunityPost post = community.post(p1.getId(),"김환자","오늘 운동 인증!", "조깅 3km 뛰었습니다!");
         System.out.println("커뮤니티 게시물 작성됨: " + post);
 
         var comment = community.comment(post.getId(), p1.getId(), "댓글도 남겨요!");

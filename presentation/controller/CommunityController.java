@@ -17,8 +17,8 @@ public class CommunityController {
     private final CommunityService service = new CommunityService();
     private final UserRepository userRepo = new UserRepository();
 
-    public CommunityPost post(Long authorId, String title, String content) {
-        return service.createPost(authorId, title, content);
+    public CommunityPost post(Long authorId, String authorName,String title, String content) {
+        return service.createPost(authorId, authorName,title, content);
     }
 
     public List<CommunityPost> listPosts() {

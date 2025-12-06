@@ -141,7 +141,7 @@ public class CommunityPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "제목과 내용을 모두 입력해주세요.");
                 return;
             }
-            controller.post(user.getId(), title, content);
+            controller.post(user.getId(), user.getName(),title, content);
             JOptionPane.showMessageDialog(this, "게시글이 등록되었습니다.");
             loadPosts();
             cardLayout.show(mainPanel, "LIST");

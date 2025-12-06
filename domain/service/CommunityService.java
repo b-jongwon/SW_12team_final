@@ -14,9 +14,9 @@ public class CommunityService {
 
     private final CommunityRepository repo = new CommunityRepository();
 
-    public CommunityPost createPost(Long authorId, String title, String content) {
+    public CommunityPost createPost(Long authorId, String authorName,String title, String content) {
         CommunityPost p = new CommunityPost();
-        p.create(authorId, title, content);
+        p.create(authorId, authorName, title, content);
         return repo.savePost(p);
     }
 
@@ -88,8 +88,8 @@ public class CommunityService {
             return false;
         }
 
-        repo.deletePost(postId);
-        repo.deleteCommentsByPostId(postId);
+        //repo.deletePost(postId);
+        //repo.deleteCommentsByPostId(postId);
         return true;
     }
 }
