@@ -29,7 +29,7 @@ public class ReportController {
     public GroupComparisonResult createGroup(Long patientId, String groupKey,
                                              double metric, double avg,
                                              String chartData) {
-        return service.createGroup(patientId, groupKey, metric, avg, chartData);
+        return service.getOrCalculateComparison(patientId);
     }
 
     public List<GroupComparisonResult> getGroup(Long patientId) {
