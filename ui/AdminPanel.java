@@ -4,6 +4,7 @@ import presentation.controller.AdminController;
 import domain.user.User;
 import domain.content.Announcement;
 import domain.content.ContentItem;
+import domain.patient.RiskConfiguration;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -30,8 +31,74 @@ public class AdminPanel extends JPanel {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("📢 공지사항 관리", createAnnouncementPanel());
         tabbedPane.addTab("📚 건강 콘텐츠 관리", createContentPanel());
+        tabbedPane.addTab("⚙️ 위험도 기준 설정", createConfigPanel());
 
         add(tabbedPane, BorderLayout.CENTER);
+    }
+    private JPanel createConfigPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // 설명 라벨
+        JLabel infoLabel = new JLabel("※ 환자의 위험도 분석에 사용되는 기준값(Threshold)을 수정합니다. 변경 즉시 적용됩니다.");
+        infoLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(infoLabel, BorderLayout.NORTH);
+
+        // 설정값 입력 폼
+        JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
+
+        // 각 항목별 입력 필드 생성
+        JTextField bpSysField = new JTextField(String.valueOf(RiskConfiguration.BP_SYSTOLIC_THRESHOLD));
+        JTextField bpDiaField = new JTextField(String.valueOf(RiskConfiguration.BP_DIASTOLIC_THRESHOLD));
+        JTextField sugarField = new JTextField(String.valueOf(RiskConfiguration.SUGAR_THRESHOLD));
+        JTextField bmiField = new JTextField(String.valueOf(RiskConfiguration.BMI_THRESHOLD));
+        JTextField cholField = new JTextField(String.valueOf(RiskConfiguration.CHOLESTEROL_THRESHOLD));
+
+        formPanel.add(new JLabel("고혈압 기준 (수축기):")); formPanel.add(bpSysField);
+        formPanel.add(new JLabel("고혈압 기준 (이완기):")); formPanel.add(bpDiaField);
+        formPanel.add(new JLabel("당뇨 기준 (혈당):"));     formPanel.add(sugarField);
+        formPanel.add(new JLabel("비만 기준 (BMI):"));      formPanel.add(bmiField);
+        formPanel.add(new JLabel("콜레스테롤 기준:"));      formPanel.add(cholField);
+
+        panel.add(formPanel, BorderLayout.CENTER);
+
+        // 저장 버튼
+        JButton saveBtn = new JButton("💾 설정 저장 및 적용");
+        saveBtn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        saveBtn.setPreferredSize(new Dimension(0, 50));
+
+        saveBtn.addActionListener(e -> {
+            try {
+                // 입력값 파싱 및 적용
+                double sys = Double.parseDouble(bpSysField.getText());
+                double dia = Double.parseDouble(bpDiaField.getText());
+                double sugar = Double.parseDouble(sugarField.getText());
+                double bmi = Double.parseDouble(bmiField.getText());
+                double chol = Double.parseDouble(cholField.getText());
+
+                // Static 변수 업데이트 (메모리 상 즉시 반영)
+                RiskConfiguration.BP_SYSTOLIC_THRESHOLD = sys;
+                RiskConfiguration.BP_DIASTOLIC_THRESHOLD = dia;
+                RiskConfiguration.SUGAR_THRESHOLD = sugar;
+                RiskConfiguration.BMI_THRESHOLD = bmi;
+                RiskConfiguration.CHOLESTEROL_THRESHOLD = chol;
+
+                JOptionPane.showMessageDialog(this,
+                        "설정이 변경되었습니다.\n이제부터 환자들의 위험도 분석 시 이 기준이 적용됩니다.");
+
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "올바른 숫자를 입력해주세요.", "입력 오류", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 50, 20, 50));
+        bottomPanel.add(saveBtn, BorderLayout.CENTER);
+
+        panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        return panel;
     }
 
     // ----------------------------------------------------
