@@ -1,4 +1,3 @@
-
 package domain.community;
 
 import java.time.LocalDateTime;
@@ -6,46 +5,25 @@ import java.time.LocalDateTime;
 public class CommunityPost {
     private Long id;
     private Long authorId;
-    private String authorName;
+    private String authorName;   // 실명 저장
     private String title;
     private String content;
     private LocalDateTime createdAt;
 
     public CommunityPost() {}
 
-    public void setAuthorId(Long authorId) {
+    public CommunityPost(Long id, Long authorId, String authorName,
+                         String title, String content, LocalDateTime createdAt) {
+        this.id = id;
         this.authorId = authorId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
+        this.authorName = authorName;
         this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
         this.content = content;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
-    public String getAuthorName() { return authorName; }
-
-    public void setAuthorName(String authorName) { this.authorName = authorName; }
-
-    public void create(Long authorId, String title,String authorName, String content) {
+    // 게시글 생성 (authorName 포함, 네가 쓰던 시그니처 그대로 유지)
+    public void create(Long authorId, String title, String authorName, String content) {
         this.authorId = authorId;
         this.authorName = authorName;
         this.title = title;
@@ -53,9 +31,44 @@ public class CommunityPost {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void setId(Long id) { this.id = id; }
-    public Long getAuthorId() { return authorId; }
-    public Long getId() {      // ★★★ Main.java에서 필요
+    // --- getters / setters ---
+    public Long getId() {
         return id;
+    }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getAuthorId() {
+        return authorId;
+    }
+    public void setAuthorId(Long authorId) {
+        this.authorId = authorId;
+    }
+
+    public String getAuthorName() {
+        return authorName;
+    }
+    public void setAuthorName(String authorName) {
+        this.authorName = authorName;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

@@ -17,8 +17,9 @@ public class CommunityController {
     private final CommunityService service = new CommunityService();
     private final UserRepository userRepo = new UserRepository();
 
-    public CommunityPost post(Long authorId, String authorName,String title, String content) {
-        return service.createPost(authorId, authorName,title, content);
+    /** 게시글 작성 (authorName 포함) */
+    public CommunityPost post(Long authorId, String authorName, String title, String content) {
+        return service.createPost(authorId, authorName, title, content);
     }
 
     public List<CommunityPost> listPosts() {
@@ -29,6 +30,7 @@ public class CommunityController {
         return service.getPost(postId);
     }
 
+    /** 댓글 작성 (작성자 이름은 UserRepository로 표시하므로 authorId만 저장) */
     public CommunityComment comment(Long postId, Long authorId, String content) {
         return service.addComment(postId, authorId, content);
     }
@@ -61,9 +63,7 @@ public class CommunityController {
         return service.getAnnouncements();
     }
 
-    // -------------------- 새로 추가된 부분 --------------------
-
-    /** 게시글 삭제 (권한 검사는 Service에서 수행) */
+    /** 게시글 삭제 요청 (권한 검사는 Service에서 처리) */
     public boolean deletePost(Long postId, User requester) {
         return service.deletePost(postId, requester);
     }

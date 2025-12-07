@@ -1,1 +1,1 @@
-[{"id":1,"authorId":1,"title":"오늘 운동 인증!","content":"조깅 3km 뛰었습니다!","createdAt":"2025-12-06T19:18:49.101355100"},{"id":4,"authorId":1,"title":"테스트","content":"ㅇ","createdAt":"2025-12-06T19:26:23.119143700"}]
+[{"id":1,"authorId":1,"authorName":"김환자","title":"오늘 운동 인증!","content":"조깅 3km 뛰었습니다!","createdAt":"2025-12-07T21:44:59.570625800"},{"id":4,"authorId":1,"authorName":"환자1","title":"2","content":"22","createdAt":"2025-12-07T21:47:54.422959900"}]

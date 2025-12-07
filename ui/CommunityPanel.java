@@ -17,24 +17,20 @@ public class CommunityPanel extends JPanel {
     private final CommunityController controller = new CommunityController();
     private final User user;
 
-    // 화면 전환을 위한 카드 레이아웃
     private CardLayout cardLayout = new CardLayout();
     private JPanel mainPanel = new JPanel(cardLayout);
 
-    // [화면 1] 게시글 목록 테이블
     private DefaultTableModel tableModel;
     private JTable postTable;
 
-    // [화면 2] 글쓰기 입력 필드
     private JTextField titleField = new JTextField();
     private JTextArea contentArea = new JTextArea();
 
-    // [화면 3] 상세 보기 및 댓글
     private JLabel detailTitleLabel = new JLabel();
     private JTextArea detailContentArea = new JTextArea();
-    private JTextArea commentArea = new JTextArea(); // 댓글 목록
-    private JTextField commentInput = new JTextField(); // 댓글 입력창
-    private Long currentPostId = null; // 현재 보고 있는 게시글 ID
+    private JTextArea commentArea = new JTextArea();
+    private JTextField commentInput = new JTextField();
+    private Long currentPostId = null;
 
     public CommunityPanel(User user) {
         this.user = user;
@@ -62,7 +58,6 @@ public class CommunityPanel extends JPanel {
         top.add(refreshBtn);
         top.add(writeBtn);
 
-        // 컬럼: 번호, 제목, 작성자, (숨김용) POST_ID
         String[] columnNames = {"번호", "제목", "작성자", "POST_ID"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
@@ -134,6 +129,7 @@ public class CommunityPanel extends JPanel {
         panel.add(btnPanel, BorderLayout.SOUTH);
 
         cancelBtn.addActionListener(e -> cardLayout.show(mainPanel, "LIST"));
+
         saveBtn.addActionListener(e -> {
             String title = titleField.getText().trim();
             String content = contentArea.getText().trim();
@@ -141,7 +137,10 @@ public class CommunityPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "제목과 내용을 모두 입력해주세요.");
                 return;
             }
-            controller.post(user.getId(), user.getName(),title, content);
+
+            // authorName 포함해서 컨트롤러에 전달
+            controller.post(user.getId(), user.getName(), title, content);
+
             JOptionPane.showMessageDialog(this, "게시글이 등록되었습니다.");
             loadPosts();
             cardLayout.show(mainPanel, "LIST");
@@ -157,7 +156,6 @@ public class CommunityPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 상단: 뒤로가기 + 삭제 버튼
         JPanel topBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JButton backBtn = new JButton("⬅ 목록으로");
         JButton deleteBtn = new JButton("🗑 삭제");
@@ -192,7 +190,6 @@ public class CommunityPanel extends JPanel {
             loadPosts();
         });
 
-        // 1. 게시글 내용
         JPanel postPanel = new JPanel(new BorderLayout(5, 5));
         detailTitleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         detailContentArea.setEditable(false);
@@ -203,7 +200,6 @@ public class CommunityPanel extends JPanel {
         postPanel.add(new JScrollPane(detailContentArea), BorderLayout.CENTER);
         postPanel.setPreferredSize(new Dimension(0, 220));
 
-        // 2. 댓글 영역
         JPanel commentPanel = new JPanel(new BorderLayout(5, 5));
         commentPanel.setBorder(BorderFactory.createTitledBorder("댓글 목록"));
         commentArea.setEditable(false);
@@ -238,16 +234,20 @@ public class CommunityPanel extends JPanel {
     private void loadPosts() {
         tableModel.setRowCount(0);
         List<CommunityPost> posts = controller.listPosts();
-        posts.sort((p1, p2) -> Long.compare(p2.getId(), p1.getId()));
+        // 최신 글이 위로
+        posts.sort((p1, p2) -> Long.compare(
+                p2.getId() != null ? p2.getId() : 0L,
+                p1.getId() != null ? p1.getId() : 0L
+        ));
 
         int number = 1;
         for (CommunityPost p : posts) {
             String authorLabel = controller.getUserLabel(p.getAuthorId());
             tableModel.addRow(new Object[]{
-                    number++,
+                    number++,        // 화면용 번호
                     p.getTitle(),
                     authorLabel,
-                    p.getId()          // 숨김 컬럼
+                    p.getId()        // 숨김 컬럼 (실제 ID)
             });
         }
     }

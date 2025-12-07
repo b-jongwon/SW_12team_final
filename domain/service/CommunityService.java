@@ -14,9 +14,10 @@ public class CommunityService {
 
     private final CommunityRepository repo = new CommunityRepository();
 
-    public CommunityPost createPost(Long authorId, String authorName,String title, String content) {
+    // 게시글 생성 (authorName 포함)
+    public CommunityPost createPost(Long authorId, String authorName, String title, String content) {
         CommunityPost p = new CommunityPost();
-        p.create(authorId, authorName, title, content);
+        p.create(authorId, title, authorName, content);  // ← 시그니처 맞춰서 호출
         return repo.savePost(p);
     }
 
@@ -88,8 +89,8 @@ public class CommunityService {
             return false;
         }
 
-        //repo.deletePost(postId);
-        //repo.deleteCommentsByPostId(postId);
+        repo.deletePost(postId);
+        repo.deleteCommentsByPostId(postId);
         return true;
     }
 }
