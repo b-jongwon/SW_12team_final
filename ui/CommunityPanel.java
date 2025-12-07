@@ -4,6 +4,7 @@ import presentation.controller.CommunityController;
 import domain.user.User;
 import domain.community.CommunityPost;
 import domain.community.CommunityComment;
+import domain.content.Announcement;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -58,7 +59,7 @@ public class CommunityPanel extends JPanel {
         top.add(refreshBtn);
         top.add(writeBtn);
 
-        String[] columnNames = {"번호", "제목", "작성자", "POST_ID"};
+        String[] columnNames = {"번호", "제목", "작성자", "POST_ID", "TYPE"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) { return false; }
@@ -71,6 +72,10 @@ public class CommunityPanel extends JPanel {
         postTable.getColumnModel().getColumn(3).setMaxWidth(0);
         postTable.getColumnModel().getColumn(3).setWidth(0);
 
+        postTable.getColumnModel().getColumn(4).setMinWidth(0);
+        postTable.getColumnModel().getColumn(4).setMaxWidth(0);
+        postTable.getColumnModel().getColumn(4).setWidth(0);
+
         // 더블클릭 → 상세 보기
         postTable.addMouseListener(new MouseAdapter() {
             @Override
@@ -80,7 +85,12 @@ public class CommunityPanel extends JPanel {
                     if (viewRow != -1) {
                         int modelRow = postTable.convertRowIndexToModel(viewRow);
                         Long postId = (Long) tableModel.getValueAt(modelRow, 3);
-                        showPostDetail(postId);
+                        String type = (String) tableModel.getValueAt(modelRow, 4);
+                        if ("NOTICE".equals(type)) {
+                            showAnnouncementDetail(postId); // 공지사항은 팝업으로
+                        } else {
+                            showPostDetail(postId); // 일반글은 상세 화면으로
+                        }
                     }
                 }
             }
@@ -234,6 +244,21 @@ public class CommunityPanel extends JPanel {
     private void loadPosts() {
         tableModel.setRowCount(0);
         List<CommunityPost> posts = controller.listPosts();
+        // 1. 공지사항 로드 (상단 고정)
+        List<Announcement> notices = controller.listAnnouncements();
+        // 최신 공지가 위로 오도록 정렬 (ID 역순)
+        notices.sort((a1, a2) -> Long.compare(a2.getId(), a1.getId()));
+
+        for (Announcement a : notices) {
+            tableModel.addRow(new Object[]{
+                    "📢",             // 번호 대신 아이콘
+                    "[공지] " + a.getTitle(),
+                    "관리자",
+                    a.getId(),
+                    "NOTICE"          // 타입 지정
+            });
+        }
+
         // 최신 글이 위로
         posts.sort((p1, p2) -> Long.compare(
                 p2.getId() != null ? p2.getId() : 0L,
@@ -247,9 +272,27 @@ public class CommunityPanel extends JPanel {
                     number++,        // 화면용 번호
                     p.getTitle(),
                     authorLabel,
-                    p.getId()        // 숨김 컬럼 (실제 ID)
+                    p.getId(),        // 숨김 컬럼 (실제 ID)
+                    "POST"
             });
         }
+    }
+
+    private void showAnnouncementDetail(Long annId) {
+        // 컨트롤러에서 ID로 공지사항 찾는 메서드가 없다면 리스트에서 찾음
+        controller.listAnnouncements().stream()
+                .filter(a -> a.getId().equals(annId))
+                .findFirst()
+                .ifPresent(a -> {
+                    JTextArea area = new JTextArea(a.getContent());
+                    area.setEditable(false);
+                    area.setLineWrap(true);
+                    area.setWrapStyleWord(true);
+                    area.setPreferredSize(new Dimension(400, 300));
+
+                    JOptionPane.showMessageDialog(this, new JScrollPane(area),
+                            "📢 " + a.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+                });
     }
 
     private void showPostDetail(Long postId) {

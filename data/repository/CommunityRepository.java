@@ -20,7 +20,7 @@ public class CommunityRepository {
     private static final String COMMENT_FILE = "data/community_comments.json";
     private static final String CONTENT_FILE = "data/community_contents.json";
     private static final String CHECKLIST_FILE = "data/community_checklist.json";
-    private static final String ANNOUNCEMENT_FILE = "data/community_announcements.json";
+    private static final String ANNOUNCEMENT_FILE = "data/announcements.json";
 
     // ------------------ 내부 공통 헬퍼 ------------------
 
