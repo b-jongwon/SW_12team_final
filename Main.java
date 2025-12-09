@@ -39,40 +39,6 @@ public class Main {
         User admin = auth.register("관리자", "1234", "시스템관리자", "ADMIN");
         System.out.println("✅ 관리자 등록: " + admin.getName());
 
-        // -------------------------
-        // 2. 로그인 테스트
-        // -------------------------
-        var loginResult = auth.login("patient1", "1234");
-        System.out.println("로그인 결과: " + loginResult);
-
-
-        // -------------------------
-        // 3. 환자 건강 기록 입력
-        // -------------------------
-        HealthRecord rec = patient.addRecord(
-                p1.getId(), 130, 85, 110.5,
-                "No", "Occasional", "Medium", "고혈압 위험",
-                1.75, 65
-        );
-        System.out.println("건강 기록 생성됨: " + rec.summary());
-
-
-        // -------------------------
-        // 4. 리포트 생성
-        // -------------------------
-        PersonalReport personal = report.createPersonal(
-                p1.getId(),
-                "전반적으로 안정적 상태",
-                "합병증 위험은 낮음"
-        );
-        System.out.println("개인 리포트 생성됨: " + personal.summarize());
-
-        GroupComparisonResult group = report.createGroup(
-                p1.getId(), "AGE_GROUP_20_30",
-                72.3, 65.0,
-                "그래프데이터임"
-        );
-        System.out.println("그룹 비교 리포트 생성됨 (ID=" + group.getId() + ")");
 
 
         // -------------------------
@@ -87,25 +53,6 @@ public class Main {
         var rule = assignment.createRule(p1.getId(), "BP_HIGH", "혈압 경고 알림");
         System.out.println("규칙 등록됨");
 
-
-        // -------------------------
-        // 6. 메시징 시스템
-        // -------------------------
-        var thread = message.createThread(p1.getId(), null, d1.getId());
-        System.out.println("메시지 스레드 생성됨: thread=" + thread.getId());
-
-        Message msg = message.send(thread.getId(), p1.getId(), "안녕하세요 의사쌤!");
-        System.out.println("메시지 전송됨: " + msg.getContent());
-
-
-        // -------------------------
-        // 7. 커뮤니티 시스템
-        // -------------------------
-        CommunityPost post = community.post(p1.getId(),"김환자","오늘 운동 인증!", "조깅 3km 뛰었습니다!");
-        System.out.println("커뮤니티 게시물 작성됨: " + post);
-
-        var comment = community.comment(post.getId(), p1.getId(), "댓글도 남겨요!");
-        System.out.println("댓글 작성됨");
 
 
         // -------------------------
