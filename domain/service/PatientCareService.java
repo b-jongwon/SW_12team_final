@@ -1,11 +1,16 @@
 package domain.service;
 
 import data.repository.MedicalRepository;
+import domain.medical.DoctorNote;
+import domain.medical.ScheduledExam;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
 import domain.patient.ComplicationRisk;
 import domain.patient.RiskConfiguration;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PatientCareService {
@@ -26,16 +31,100 @@ public class PatientCareService {
         record.update(sys, dia, sugar, smoking, drinking,
                 activity, riskFactors, height, weight);
 
-        // 2. [Data] 건강 기록 저장 (기존 로직)
-        HealthRecord savedRecord = repo.saveNewRecord(record);
+        // 오직 건강 기록만 저장함
+        return repo.saveNewRecord(record);
+    }
 
-        // =================================================================
-        // 3. [Service Logic] "자동 위험도 분석" 오케스트레이션 (새로 추가된 부분)
-        // 컨트롤러가 시키지 않아도, 서비스가 알아서 판단하여 위험도를 분석하고 저장함
-        // =================================================================
-        analyzeAndSaveRisk(patientId, savedRecord);
-        analyzeComplication(patientId, savedRecord);
-        return savedRecord;
+    public List<RiskAssessment> getRisk(Long patientId) {
+        // (1) 환자의 건강 기록을 가져옴
+        List<HealthRecord> records = repo.findRecordsByPatient(patientId);
+
+        if (records.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // (2) 가장 최근 기록 하나를 꺼냄
+        HealthRecord latestRecord = records.get(records.size() - 1);
+
+        // (3) [실시간 계산] 현재 설정된 기준값으로 위험도를 계산함
+        RiskAssessment assessment = calculateRiskDynamic(latestRecord);
+
+        // (4) 리스트 형태로 반환 (UI 호환성 유지)
+        List<RiskAssessment> result = new ArrayList<>();
+        result.add(assessment);
+        return result;
+    }
+
+    public List<ComplicationRisk> getCompRisk(Long patientId) {
+        List<HealthRecord> records = repo.findRecordsByPatient(patientId);
+
+        if (records.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        HealthRecord latestRecord = records.get(records.size() - 1);
+
+        // [실시간 계산]
+        ComplicationRisk comp = calculateComplicationDynamic(latestRecord);
+
+        List<ComplicationRisk> result = new ArrayList<>();
+        result.add(comp);
+        return result;
+    }
+
+    // =================================================================
+    // [내부 로직] 실시간 계산 헬퍼 메서드 (저장소 저장 X, 객체 리턴 O)
+    // =================================================================
+    private RiskAssessment calculateRiskDynamic(HealthRecord r) {
+        double score = 0.0;
+        StringBuilder reason = new StringBuilder();
+
+        // 관리자가 설정한 현재(RiskConfiguration) 값을 기준으로 계산
+        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
+                r.getDiastolicBp() >= RiskConfiguration.BP_DIASTOLIC_THRESHOLD) {
+            score += 30.0;
+            reason.append("고혈압/ ");
+        }
+        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) {
+            score += 20.0;
+            reason.append("당뇨/ ");
+        }
+        if (r.getBmi() >= RiskConfiguration.BMI_THRESHOLD) {
+            score += 10.0;
+            reason.append("비만/ ");
+        }
+        if ("Yes".equalsIgnoreCase(r.getSmoking())) {
+            score += 15.0;
+            reason.append("흡연/ ");
+        }
+
+        if (score == 0) reason.append("정상 범위");
+
+        String level = "정상";
+        if (score >= 50) level = "고위험";
+        else if (score >= 30) level = "주의";
+
+        // DB에 저장하지 않고, 메모리상에서 객체만 만들어서 반환
+        RiskAssessment risk = new RiskAssessment();
+        risk.setPatientId(r.getPatientId());
+        risk.assess(score, score, level, reason.toString());
+        risk.setAssessedAt(LocalDateTime.now()); // 조회 시점 시간
+
+        return risk;
+    }
+
+    private ComplicationRisk calculateComplicationDynamic(HealthRecord r) {
+        double riskScore = 0;
+        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 20;
+        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 10;
+
+        String level = riskScore >= 50 ? "높음" : (riskScore >= 20 ? "중간" : "낮음");
+
+        ComplicationRisk comp = new ComplicationRisk();
+        comp.setPatientId(r.getPatientId());
+        comp.update("심혈관/뇌졸중 (실시간 분석)", riskScore, "위험도: " + level);
+
+        return comp;
     }
 
     // [내부 헬퍼 메서드] 서비스 레이어의 분석 로직
@@ -78,19 +167,6 @@ public class PatientCareService {
 
         repo.saveRisk(risk);
     }
-    private void analyzeComplication(Long patientId, HealthRecord r) {
-        double riskScore = 0;
-        // 기존 위험 요인 가중치
-        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 20;
-        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 10;
-
-        String level = riskScore >= 50 ? "높음" : (riskScore >= 20 ? "중간" : "낮음");
-
-        ComplicationRisk comp = new ComplicationRisk();
-        comp.setPatientId(patientId);
-        comp.update("심혈관/뇌졸중", riskScore, "위험도: " + level);
-        repo.saveCompRisk(comp);
-    }
 
     // --- 아래 기존 메서드들은 변경 없음 ---
     public List<HealthRecord> getRecords(Long patientId) {
@@ -103,10 +179,6 @@ public class PatientCareService {
         r.setPatientId(pid);
         r.assess(score, percent, level, summary);
         return repo.saveRisk(r);
-    }
-
-    public List<RiskAssessment> getRisk(Long pid) {
-        return repo.findRiskByPatient(pid);
     }
 
     public ComplicationRisk createCompRisk(Long pid, String type,
@@ -124,9 +196,5 @@ public class PatientCareService {
     // [NEW] 내 검사 예약 목록 조회
     public List<domain.medical.ScheduledExam> getMyExams(Long patientId) {
         return repo.findExamsByPatient(patientId);
-    }
-
-    public List<ComplicationRisk> getCompRisk(Long pid) {
-        return repo.findCompRiskByPatient(pid);
     }
 }
