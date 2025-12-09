@@ -101,15 +101,20 @@ public class PatientPanel extends JPanel {
         JButton checkBtn = new JButton("내 위험도 확인하기");
         checkBtn.addActionListener(e -> {
             List<RiskAssessment> risks = patientController.getRisk(user.getId());
+
             output.setText("=== ⚠️ 뇌졸중 위험도 분석 리포트 ===\n\n");
             if (risks.isEmpty()) output.append("분석된 데이터가 없습니다.\n");
             else {
-                RiskAssessment latest = risks.get(risks.size() - 1);
-                output.append("최종 분석 일시: " + latest.getAssessedAt() + "\n");
-                output.append("위험 레벨: [" + latest.getRiskLevel() + "]\n");
-                output.append("위험 점수: " + latest.getRiskScore() + "점\n");
-                output.append("분석 소견: " + latest.getRecommendationSummary() + "\n");
+                int count = 1;
+                for (RiskAssessment r : risks) {
+                    output.append(String.format("[%d회차 분석 결과]\n", count++));
+                    output.append(" - 위험 레벨: " + r.getRiskLevel() + "\n");
+                    output.append(" - 위험 점수: " + r.getRiskScore() + "점\n");
+                    output.append(" - 상세 소견: " + r.getRecommendationSummary() + "\n");
+                    output.append("--------------------------------------------------\n");
+                }
             }
+            output.setCaretPosition(output.getDocument().getLength());
         });
 
         panel.add(checkBtn, BorderLayout.NORTH);

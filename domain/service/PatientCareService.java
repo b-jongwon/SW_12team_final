@@ -43,15 +43,14 @@ public class PatientCareService {
             return Collections.emptyList();
         }
 
-        // (2) 가장 최근 기록 하나를 꺼냄
-        HealthRecord latestRecord = records.get(records.size() - 1);
-
-        // (3) [실시간 계산] 현재 설정된 기준값으로 위험도를 계산함
-        RiskAssessment assessment = calculateRiskDynamic(latestRecord);
-
-        // (4) 리스트 형태로 반환 (UI 호환성 유지)
         List<RiskAssessment> result = new ArrayList<>();
-        result.add(assessment);
+
+        // (2) 반복문을 돌며 모든 기록에 대해 "현재 기준"으로 재계산
+        for (HealthRecord record : records) {
+            RiskAssessment assessment = calculateRiskDynamic(record);
+            result.add(assessment);
+        }
+
         return result;
     }
 
@@ -62,13 +61,13 @@ public class PatientCareService {
             return Collections.emptyList();
         }
 
-        HealthRecord latestRecord = records.get(records.size() - 1);
-
-        // [실시간 계산]
-        ComplicationRisk comp = calculateComplicationDynamic(latestRecord);
-
         List<ComplicationRisk> result = new ArrayList<>();
-        result.add(comp);
+
+        for (HealthRecord record : records) {
+            ComplicationRisk comp = calculateComplicationDynamic(record);
+            result.add(comp);
+        }
+
         return result;
     }
 
