@@ -16,13 +16,15 @@ public class AssignmentService {
     private final AssignmentRepository repo = new AssignmentRepository();
     private final UserRepository userRepo = new UserRepository();
 
-    // [수정] 로그인 ID로 배정 '신청' (주치의 1명 제한 로직 강화)
-    // =================================================================
+    // [NEW] ★ 초기화 시에도 채팅방 연동을 위해 추가
+    private final MessagingService messagingService = new MessagingService();
+
+    // 1. 로그인 ID로 배정 '신청' (환자가 버튼 눌러서 신청할 때)
     public PatientAssignment requestConnection(Long patientId, String docLoginId, String careLoginId) {
         Long doctorId = null;
         Long caregiverId = null;
 
-        // 1. ID 찾기 (기존과 동일)
+        // 1. ID 찾기
         if (docLoginId != null && !docLoginId.isEmpty()) {
             Optional<User> doc = userRepo.findByLoginId(docLoginId);
             if (doc.isPresent() && "DOCTOR".equals(doc.get().getRole())) {
@@ -40,12 +42,8 @@ public class AssignmentService {
             }
         }
 
-        // 환자의 모든 배정 목록 가져오기
+        // 중복 체크 로직 (기존 유지)
         List<PatientAssignment> myAssignments = repo.getAssignments(patientId);
-
-        // -------------------------------------------------------------
-        // [검사 1] 동일 인물 중복 체크 및 재신청 처리
-        // -------------------------------------------------------------
         for (PatientAssignment a : myAssignments) {
             boolean sameDoc = (doctorId != null && doctorId.equals(a.getDoctorId()));
             boolean sameCare = (caregiverId != null && caregiverId.equals(a.getCaregiverId()));
@@ -58,7 +56,6 @@ public class AssignmentService {
                     throw new IllegalStateException("이미 해당 사용자와 연결되어 있습니다.");
                 }
                 if ("REJECTED".equals(a.getStatus())) {
-                    // 거절당했던 기록이 있으면 -> PENDING으로 상태 변경하여 재신청
                     a.setStatus("PENDING");
                     repo.updateAssignment(a);
                     return a;
@@ -66,31 +63,27 @@ public class AssignmentService {
             }
         }
 
-        // -------------------------------------------------------------
-        // [검사 2] 주치의 유일성 체크 (이미 다른 의사가 있는지 확인)
-        // -------------------------------------------------------------
+        // 주치의 유일성 체크 (기존 유지)
         if (doctorId != null) {
             for (PatientAssignment a : myAssignments) {
-                // 내 배정 목록 중에 '의사'가 포함된 기록이 있는데
                 if (a.getDoctorId() != null) {
-                    // 그게 수락되었거나 대기 중이라면 -> 다른 의사 추가 불가!
                     if ("ACCEPTED".equals(a.getStatus())) {
                         throw new IllegalStateException("이미 주치의가 배정되어 있습니다. (1명만 가능)");
                     }
                     if ("PENDING".equals(a.getStatus())) {
-                        throw new IllegalStateException("현재 주치의 연결 심사 대기 중입니다. 완료 후 다시 시도하세요.");
+                        throw new IllegalStateException("현재 주치의 연결 심사 대기 중입니다.");
                     }
                 }
             }
         }
 
-        // 3. 문제 없으면 새로 생성 (PENDING)
+        // 신청 생성
         PatientAssignment request = new PatientAssignment();
         request.requestConnection(patientId, doctorId, caregiverId);
         return repo.saveAssignment(request);
     }
 
-    // 2. [누락된 메서드 추가] 환자 연결 현황 조회
+    // 2. 환자 연결 현황 조회 (기존 유지)
     public List<ConnectionSummary> getConnectionStatus(Long patientId) {
         List<ConnectionSummary> result = new ArrayList<>();
         List<PatientAssignment> list = repo.getAssignments(patientId);
@@ -99,7 +92,6 @@ public class AssignmentService {
             String role = "";
             String name = "알수없음";
 
-            // [수정 포인트] final 변수로 만들기 위해 여기서 값을 확정
             final Long finalTargetId;
 
             if (a.getDoctorId() != null) {
@@ -113,7 +105,6 @@ public class AssignmentService {
             }
 
             if (finalTargetId != null) {
-                // 이제 finalTargetId는 값이 안 바뀌므로 람다에서 사용 가능!
                 Optional<User> u = userRepo.findAll().stream()
                         .filter(user -> user.getId().equals(finalTargetId))
                         .findFirst();
@@ -122,18 +113,25 @@ public class AssignmentService {
                     name = u.get().getName() + " (" + u.get().getLoginId() + ")";
                 }
             }
-
             result.add(new ConnectionSummary(role, name, a.getStatus()));
         }
         return result;
     }
 
-    // 기존 메서드들 유지...
+    // [★ 수정된 부분] 강제 배정 (Main에서 초기화할 때 쓰이는 메서드)
     public PatientAssignment assignPatient(Long pid, Long doctorId, Long caregiverId) {
         PatientAssignment a = new PatientAssignment();
+        // ACCEPTED 상태로 바로 생성됨
         a.assign(pid, doctorId, caregiverId);
-        return repo.saveAssignment(a);
+        PatientAssignment saved = repo.saveAssignment(a);
+
+        // [NEW] ★★★ 여기서도 채팅방에 의사/보호자를 넣어줘야 합니다!
+        messagingService.joinRoom(pid, doctorId, caregiverId);
+
+        return saved;
     }
+
+    // 기존 단순 위임 메서드들
     public List<PatientAssignment> getAssignments(Long pid) { return repo.getAssignments(pid); }
     public ReminderSetting createReminder(Long pid, String type, String rule, String msg) {
         ReminderSetting r = new ReminderSetting(); r.create(pid, type, rule, msg); return repo.saveReminder(r);
@@ -144,7 +142,6 @@ public class AssignmentService {
     }
     public List<NotificationRule> getRules(Long pid) { return repo.getRules(pid); }
 
-    // [DTO 클래스]
     public static class ConnectionSummary {
         private String role;
         private String name;

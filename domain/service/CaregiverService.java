@@ -10,7 +10,6 @@ import domain.user.User;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CaregiverService {
 
@@ -18,36 +17,48 @@ public class CaregiverService {
     private final UserRepository userRepo = new UserRepository();
     private final MedicalRepository medicalRepo = new MedicalRepository();
 
+    // [중요] 추가
+    private final MessagingService messagingService = new MessagingService();
+
     // 1. 내 가족 목록 (수락된 사람만)
     public List<FamilySummary> getMyFamily(Long caregiverId) {
         return getListByStatus(caregiverId, "ACCEPTED");
     }
 
-    // [NEW] 2. 연결 요청 목록 (대기 중인 사람만)
+    // 2. 연결 요청 목록 (대기 중인 사람만)
     public List<FamilySummary> getPendingRequests(Long caregiverId) {
         return getListByStatus(caregiverId, "PENDING");
     }
 
-    // [NEW] 3. 수락/거절 처리
+    // 3. 수락/거절 처리
     public void replyToRequest(Long assignmentId, boolean isAccept) {
+        // [수정완료] 주석 대신 실제 로직 복원
         Optional<PatientAssignment> target = assignmentRepo.findAll().stream()
                 .filter(a -> a.getId().equals(assignmentId))
                 .findFirst();
 
         if (target.isPresent()) {
             PatientAssignment assignment = target.get();
-            if (isAccept) assignment.accept();
-            else assignment.reject();
+            if (isAccept) {
+                assignment.accept();
+                assignmentRepo.updateAssignment(assignment);
 
-            assignmentRepo.updateAssignment(assignment); // 업데이트
+                // [NEW] 채팅방 입장 (간병인)
+                messagingService.joinRoom(assignment.getPatientId(), null, assignment.getCaregiverId());
+            }
+            else {
+                assignment.reject();
+                assignmentRepo.updateAssignment(assignment);
+            }
         }
     }
-    // [NEW] 가족(환자)의 건강 기록 상세 조회
+
+    // 가족(환자)의 건강 기록 상세 조회
     public List<domain.patient.HealthRecord> getPatientHealthRecords(Long patientId) {
         return medicalRepo.findRecordsByPatient(patientId);
     }
 
-    // [NEW] 가족(환자)에게 남겨진 의사 소견 조회
+    // 가족(환자)에게 남겨진 의사 소견 조회
     public List<domain.medical.DoctorNote> getPatientDoctorNotes(Long patientId) {
         return medicalRepo.findNotesByPatient(patientId);
     }
@@ -58,7 +69,7 @@ public class CaregiverService {
         List<PatientAssignment> list = assignmentRepo.findAssignmentsByCaregiver(caregiverId);
 
         for (PatientAssignment assign : list) {
-            if (!status.equals(assign.getStatus())) continue; // 상태 필터링
+            if (!status.equals(assign.getStatus())) continue;
 
             Long patientId = assign.getPatientId();
             String name = "알수없음";

@@ -1,4 +1,3 @@
-
 package domain.service;
 
 import data.repository.MessagingRepository;
@@ -7,20 +6,46 @@ import domain.messaging.MessageThread;
 import domain.patient.Alert;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MessagingService {
 
     private final MessagingRepository repo = new MessagingRepository();
 
     public MessageThread getOrCreatePatientRoom(Long patientId) {
-        // 1. 해당 환자의 방이 이미 존재하는지 DB에서 조회
         return repo.findThreadByPatientId(patientId)
                 .orElseGet(() -> {
-                    // 2. 없으면 새로 생성 (참여자는 환자 본인 ID만 기록, 의사/보호자는 동적으로 참여)
                     MessageThread newThread = new MessageThread();
                     newThread.create(patientId);
                     return repo.createThread(newThread);
                 });
+    }
+
+    // [중요] 방 참여 로직
+    public void joinRoom(Long patientId, Long doctorId, Long caregiverId) {
+        MessageThread thread = getOrCreatePatientRoom(patientId);
+
+        if (doctorId != null) {
+            thread.setDoctorId(doctorId);
+        }
+        if (caregiverId != null) {
+            thread.addCaregiver(caregiverId);
+        }
+
+        updateThread(thread);
+    }
+
+    // [★ 수정] repo.findAllThreads() / repo.saveAllThreads() 로 변경
+    private void updateThread(MessageThread updated) {
+        List<MessageThread> all = repo.findAllThreads();
+
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).getId().equals(updated.getId())) {
+                all.set(i, updated);
+                break;
+            }
+        }
+        repo.saveAllThreads(all);
     }
 
     public Message sendMessage(Long threadId, Long senderId, String content) {
@@ -29,9 +54,6 @@ public class MessagingService {
         m.send(senderId, content);
         repo.saveMessage(m);
 
-        // generate alert for receiver(s)
-        List<Long> receivers = List.of(); // extend later
-        // simple example: alert doctor
         Alert a = new Alert();
         a.create(senderId, "새 메시지가 도착했습니다.");
         repo.saveAlert(a);
@@ -43,8 +65,14 @@ public class MessagingService {
         return repo.getMessagesByThread(threadId);
     }
 
+    // [★ 수정] repo.findAllThreads() 사용 및 리스트 포함 여부 확인
     public List<MessageThread> getThreads(Long userId) {
-        return repo.getThreadsForUser(userId);
+        return repo.findAllThreads().stream()
+                .filter(t ->
+                        t.getPatientId().equals(userId) ||
+                                (t.getDoctorId() != null && t.getDoctorId().equals(userId)) ||
+                                t.getCaregiverIds().contains(userId)
+                ).collect(Collectors.toList());
     }
 
     public List<Alert> getAlerts(Long userId) {

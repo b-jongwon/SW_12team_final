@@ -12,7 +12,6 @@ import java.util.List;
 
 public class MessagingPanel extends JPanel {
 
-    // 1. 컨트롤러 (DI 적용 전 직접 생성)
     private final MessagingController controller = new MessagingController();
     private final User user;
 
@@ -33,15 +32,11 @@ public class MessagingPanel extends JPanel {
         topPanel.add(new JLabel("대화방 선택:"));
 
         threadCombo = new JComboBox<>();
-        threadCombo.setPreferredSize(new Dimension(300, 30));
+        threadCombo.setPreferredSize(new Dimension(350, 30)); // 폭을 조금 넓힘
         topPanel.add(threadCombo);
 
         JButton refreshBtn = new JButton("새로고침");
         topPanel.add(refreshBtn);
-
-        // (테스트용) 대화방이 없을 때 강제로 하나 만드는 버튼
-        JButton createTestThreadBtn = new JButton("의사와 대화 시작(테스트)");
-        topPanel.add(createTestThreadBtn);
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -74,52 +69,60 @@ public class MessagingPanel extends JPanel {
         // [이벤트 리스너 등록]
         // ==========================================
 
-        // 1. 새로고침 버튼: 내 대화방 목록 불러오기
+        // 1. 새로고침 버튼
         refreshBtn.addActionListener(e -> loadThreads());
 
-        // 2. 대화방 콤보박스 변경 시: 해당 방의 메시지 로드
+        // 2. 대화방 선택 변경 시
         threadCombo.addActionListener(e -> loadMessages());
 
-        // 3. 전송 버튼: 메시지 보내기
+        // 3. 전송 버튼
         sendBtn.addActionListener(e -> sendMessage());
-        inputField.addActionListener(e -> sendMessage()); // 엔터키로도 전송 가능하게
-
-        // 4. (테스트용) 의사와의 대화방 생성
-        createTestThreadBtn.addActionListener(e -> {
-            // 임의의 의사 ID(예: 999)와 대화방 생성 시도
-            // 실제로는 '환자 배정' 로직을 통해 의사 ID를 알아와야 함
-            controller.createThread(user.getId(), null, 999L);
-            JOptionPane.showMessageDialog(this, "테스트용 대화방이 생성되었습니다.\n'새로고침'을 눌러주세요.");
-        });
+        inputField.addActionListener(e -> sendMessage());
 
         // 패널 열릴 때 초기 로드
         loadThreads();
     }
 
     // ---------------------------------------------------
-    // [로직 1] 내가 참여중인 대화방 목록 불러오기
+    // [로직 1] 대화방 목록 불러오기 (사용자님이 작성하신 부분 반영)
     // ---------------------------------------------------
     private void loadThreads() {
         threadCombo.removeAllItems();
+        // 백엔드에서 내가 포함된 모든 방을 가져옴 (환자 본인, 의사, 보호자 포함)
         List<MessageThread> threads = controller.getThreads(user.getId());
 
         if (threads.isEmpty()) {
-            chatArea.setText("참여 중인 대화방이 없습니다.\n상단의 '의사와 대화 시작' 버튼을 눌러보세요.");
+            chatArea.setText("참여 중인 대화방이 없습니다.\n(연결이 수락되면 자동으로 방이 생성됩니다)");
         } else {
             for (MessageThread t : threads) {
-                // 콤보박스에 아이템 추가 (보여지는 텍스트와 실제 ID를 묶기 위해 Wrapper 클래스 사용)
-                String label = "대화방 #" + t.getId() + " (with Doctor " + t.getDoctorId() + ")";
+                // 방 제목 생성
+                String roomName = "환자(ID:" + t.getPatientId() + ")의 건강관리방";
+
+                // 구성원 수 계산
+                int memberCount = 1; // 환자는 무조건 있음
+                if (t.getDoctorId() != null) memberCount++; // 의사 있으면 +1
+                if (t.getCaregiverIds() != null) {
+                    memberCount += t.getCaregiverIds().size(); // 보호자 수만큼 +
+                }
+
+                // 라벨 만들기: "환자(...)의 건강관리방 (참여자: 3명)"
+                String label = String.format("%s (참여자: %d명)", roomName, memberCount);
+
+                // 콤보박스에 추가
                 threadCombo.addItem(new ThreadItem(t.getId(), label));
             }
         }
     }
 
     // ---------------------------------------------------
-    // [로직 2] 선택된 대화방의 메시지 내역 불러오기
+    // [로직 2] 메시지 내용 불러오기
     // ---------------------------------------------------
     private void loadMessages() {
         ThreadItem selected = (ThreadItem) threadCombo.getSelectedItem();
-        if (selected == null) return;
+        if (selected == null) {
+            chatArea.setText("");
+            return;
+        }
 
         chatArea.setText(""); // 초기화
         List<Message> messages = controller.getMessages(selected.threadId);
@@ -127,7 +130,7 @@ public class MessagingPanel extends JPanel {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         for (Message m : messages) {
-            String sender = (m.getSenderId().equals(user.getId())) ? "[나]" : "[상대방]";
+            String sender = (m.getSenderId().equals(user.getId())) ? "[나]" : "[ID:" + m.getSenderId() + "]";
             String time = m.getSentAt().format(formatter);
 
             chatArea.append(sender + " " + time + "\n");
@@ -139,7 +142,7 @@ public class MessagingPanel extends JPanel {
     }
 
     // ---------------------------------------------------
-    // [로직 3] 메시지 전송하기
+    // [로직 3] 메시지 전송
     // ---------------------------------------------------
     private void sendMessage() {
         ThreadItem selected = (ThreadItem) threadCombo.getSelectedItem();
@@ -151,15 +154,13 @@ public class MessagingPanel extends JPanel {
         }
         if (content.isEmpty()) return;
 
-        // 컨트롤러 호출
         controller.send(selected.threadId, user.getId(), content);
 
-        // UI 업데이트
         inputField.setText("");
-        loadMessages(); // 보낸 후 목록 다시 로드해서 내 메시지 표시
+        loadMessages(); // 전송 후 즉시 갱신
     }
 
-    // 콤보박스용 아이템 클래스 (내부 클래스)
+    // 콤보박스용 아이템 클래스
     private static class ThreadItem {
         Long threadId;
         String label;
@@ -171,7 +172,7 @@ public class MessagingPanel extends JPanel {
 
         @Override
         public String toString() {
-            return label; // 콤보박스에 표시될 문자열
+            return label;
         }
     }
 }
