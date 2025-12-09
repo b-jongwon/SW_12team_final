@@ -45,11 +45,11 @@ public class PatientCareService {
         StringBuilder reason = new StringBuilder();
 
         // 간단한 분석 로직 (실제로는 더 복잡한 알고리즘이 들어갈 자리)
-        if (r.getSystolicBp() >= 140 || r.getDiastolicBp() >= 90) {
+        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD || r.getDiastolicBp() >= RiskConfiguration.BP_DIASTOLIC_THRESHOLD) {
             score += 30.0;
             reason.append("고혈압/ ");
         }
-        if (r.getBloodSugar() >= 126) {
+        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) {
             score += 20.0;
             reason.append("당뇨(고혈당)/ ");
         }
@@ -57,7 +57,7 @@ public class PatientCareService {
             score += 15.0;
             reason.append("흡연/ ");
         }
-        if (r.getBmi() >= 25.0) { // HealthRecord 도메인이 계산해둔 BMI 활용
+        if (r.getBmi() >= RiskConfiguration.BMI_THRESHOLD) { // HealthRecord 도메인이 계산해둔 BMI 활용
             score += 10.0;
             reason.append("비만/ ");
         }
@@ -82,6 +82,7 @@ public class PatientCareService {
         double riskScore = 0;
         // 기존 위험 요인 가중치
         if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 20;
+        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 10;
 
         String level = riskScore >= 50 ? "높음" : (riskScore >= 20 ? "중간" : "낮음");
 

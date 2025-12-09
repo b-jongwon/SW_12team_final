@@ -84,6 +84,8 @@ public class AdminPanel extends JPanel {
                 RiskConfiguration.BMI_THRESHOLD = bmi;
                 RiskConfiguration.CHOLESTEROL_THRESHOLD = chol;
 
+                RiskConfiguration.save();
+
                 JOptionPane.showMessageDialog(this,
                         "설정이 변경되었습니다.\n이제부터 환자들의 위험도 분석 시 이 기준이 적용됩니다.");
 
