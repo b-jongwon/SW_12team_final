@@ -15,6 +15,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 public class PatientPanel extends JPanel {
 
@@ -180,12 +181,19 @@ public class PatientPanel extends JPanel {
             if (groups.isEmpty()) output.append("생성된 비교 리포트가 없습니다.\n");
             else {
                 for (GroupComparisonResult g : groups) {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    String timeStr = g.getCreatedAt() != null ?
+                            g.getCreatedAt().format(formatter) : "날짜 정보 없음";
+                    output.append("--------------------------------------------------\n");
+                    output.append("[분석 일시: " + timeStr + "]\n"); // 시간 표시
                     output.append("[그룹: " + g.getGroupKey() + "]\n");
                     output.append("나의 수치: " + g.getPatientMetric() + "\n");
                     output.append("그룹 평균: " + g.getGroupAverage() + "\n");
                     output.append("상위: " + String.format("%.1f", g.getPercentile()) + "%\n\n");
                 }
+                output.append("--------------------------------------------------\n");
             }
+            output.setCaretPosition(output.getDocument().getLength());
         });
 
         createTestBtn.addActionListener(e -> {
