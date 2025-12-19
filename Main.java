@@ -13,6 +13,7 @@ public class Main {
 
     public static void main(String[] args) {
         domain.patient.RiskConfiguration.load();
+        //
 
         clearAllData();
         System.out.println("===== Stroke Prevention System Test Start =====");
