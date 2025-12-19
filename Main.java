@@ -11,6 +11,7 @@ import java.util.Random;
 
 public class Main {
 
+    //git 연습
     public static void main(String[] args) {
         domain.patient.RiskConfiguration.load();
         //
