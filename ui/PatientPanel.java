@@ -168,7 +168,7 @@ public class PatientPanel extends JPanel {
         output.setEditable(false);
 
         JButton loadBtn = new JButton("또래 비교 리포트 보기");
-        JButton createTestBtn = new JButton("비교 분석 요청 (테스트용)");
+        JButton createTestBtn = new JButton("비교 분석 요청");
 
         JPanel btnPanel = new JPanel();
         btnPanel.add(loadBtn);

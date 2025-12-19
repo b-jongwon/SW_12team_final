@@ -8,7 +8,9 @@ import domain.patient.GroupComparisonResult;
 import domain.patient.HealthRecord;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 리포트 관련 비즈니스 로직:
@@ -47,9 +49,29 @@ public class ReportService {
         // 실제로는 나이대/성별 필터링이 들어가야 하지만, 현재 User 정보에 나이 필드가 없으므로 전체 평균으로 대체
         List<HealthRecord> allRecords = medicalRepo.findAllRecords();
 
+        Map<Long, HealthRecord> latestRecordsMap = new HashMap<>();
+
         double sumBp = 0;
         int count = 0;
         for (HealthRecord r : allRecords) {
+            // 날짜 정보가 없으면 건너뜀 (예외 방지)
+            if (r.getMeasuredAt() == null) continue;
+
+            Long pid = r.getPatientId();
+
+            // 맵에 해당 환자가 없거나, 현재 기록(r)이 기존에 저장된 기록보다 더 최신이면 갱신
+            if (!latestRecordsMap.containsKey(pid)) {
+                latestRecordsMap.put(pid, r);
+            } else {
+                HealthRecord existing = latestRecordsMap.get(pid);
+                if (r.getMeasuredAt().isAfter(existing.getMeasuredAt())) {
+                    latestRecordsMap.put(pid, r);
+                }
+            }
+        }
+
+        // 필터링된 "환자별 최신 기록"들로만 평균 계산
+        for (HealthRecord r : latestRecordsMap.values()) {
             if (r.getSystolicBp() > 0) { // 유효한 값만
                 sumBp += r.getSystolicBp();
                 count++;

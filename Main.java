@@ -7,6 +7,7 @@ import domain.user.User;
 import presentation.controller.*;
 
 import java.io.File;
+import java.util.Random;
 
 public class Main {
 
@@ -40,7 +41,9 @@ public class Main {
         User admin = auth.register("관리자", "1234", "시스템관리자", "ADMIN");
         System.out.println("✅ 관리자 등록: " + admin.getName());
 
-
+        System.out.println("\n[System] 그룹 비교 분석을 위한 가상 데이터 생성 중...");
+        generateDummyData(auth, patient);
+        System.out.println("[System] 가상 데이터 10건 생성 완료.\n");
 
         // -------------------------
         // 5. 배정 / 리마인더 / 규칙
@@ -61,6 +64,43 @@ public class Main {
         // -------------------------
         System.out.println("===== All tests finished! =====");
     }
+
+    // [NEW] 가상 데이터 생성 메서드
+    private static void generateDummyData(AuthController auth, PatientController patientCtrl) {
+        Random random = new Random();
+
+        // 10명의 추가 환자를 만들고 랜덤 건강 기록을 입력
+        for (int i = 1; i <= 10; i++) {
+            // 1. 환자 계정 생성
+            String name = "비교군환자" + i;
+            User dummyUser = auth.register("patient" + i, "1234", name, "PATIENT");
+
+            // 2. 랜덤 수치 생성 (정상 범위 ~ 위험 범위 섞음)
+            // 수축기 혈압: 100 ~ 160
+            int sys = 100 + random.nextInt(61);
+            // 이완기 혈압: 60 ~ 100
+            int dia = 60 + random.nextInt(41);
+            // 혈당: 70 ~ 200
+            double sugar = 70 + random.nextInt(131);
+            // BMI용 키/몸무게
+            double height = 1.6 + (random.nextDouble() * 0.3); // 1.6m ~ 1.9m
+            double weight = 50 + random.nextInt(50);           // 50kg ~ 100kg
+
+            // 흡연/음주 여부 랜덤
+            String smoking = random.nextBoolean() ? "Yes" : "No";
+            String drinking = random.nextBoolean() ? "Frequent" : "None";
+
+            // 3. 건강 기록 저장 (검사에 반영될 수치들)
+            patientCtrl.addRecord(
+                    dummyUser.getId(),
+                    sys, dia, sugar,
+                    smoking, drinking, "Medium",
+                    "Dummy Data",
+                    height, weight
+            );
+        }
+    }
+
     public static void clearAllData() {
         File dataDir = new File("data");
         if (!dataDir.exists()) {
