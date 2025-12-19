@@ -6,6 +6,7 @@ import presentation.controller.AssignmentController;
 import domain.user.User;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
+import domain.patient.ComplicationRisk;
 import domain.patient.GroupComparisonResult;
 import domain.patient.PatientAssignment;
 import domain.service.AssignmentService.ConnectionSummary;
@@ -48,6 +49,8 @@ public class PatientPanel extends JPanel {
         // 탭 2: 위험도 분석
         tabbedPane.addTab("⚠️ 위험도 분석 결과", createRiskPanel());
 
+        //추가: 합병증 위험도 분석
+        tabbedPane.addTab("📉 합병증 위험도 분석", createComplicationPanel());
         // 탭 3: 또래 평균 비교
         tabbedPane.addTab("📊 또래 평균 비교", createComparePanel());
 
@@ -114,6 +117,40 @@ public class PatientPanel extends JPanel {
                     output.append("--------------------------------------------------\n");
                 }
             }
+            output.setCaretPosition(output.getDocument().getLength());
+        });
+
+        panel.add(checkBtn, BorderLayout.NORTH);
+        panel.add(new JScrollPane(output), BorderLayout.CENTER);
+        return panel;
+    }
+
+    //위험도 분석 패널(추가)
+    private JPanel createComplicationPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        JTextArea output = new JTextArea();
+        output.setEditable(false);
+        output.setForeground(new Color(0, 100, 50)); // 초록색 계열로 구분
+
+        JButton checkBtn = new JButton("합병증 위험도 확인하기");
+        checkBtn.addActionListener(e -> {
+            // Controller를 통해 합병증 위험도 데이터를 가져옴
+            List<ComplicationRisk> compRisks = patientController.getCompRisk(user.getId());
+
+            output.setText("=== 📉 합병증(심혈관 등) 위험도 분석 ===\n\n");
+            if (compRisks.isEmpty()) {
+                output.append("분석된 데이터가 없습니다.\n(건강 기록을 입력하면 자동으로 분석됩니다)\n");
+            } else {
+                int count = 1;
+                for (ComplicationRisk r : compRisks) {
+                    output.append(String.format("[%d회차 분석]\n", count++));
+                    output.append(" - 분석 항목: " + r.getComplicationType() + "\n");
+                    output.append(" - 위험 점수: " + r.getProbability() + "\n");
+                    output.append(" - 분석 결과: " + r.getRecommendation() + "\n"); // 예: "위험도: 높음"
+                    output.append("--------------------------------------------------\n");
+                }
+            }
+            // 스크롤을 맨 아래로 이동
             output.setCaretPosition(output.getDocument().getLength());
         });
 
