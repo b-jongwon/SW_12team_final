@@ -101,11 +101,12 @@ public class PatientPanel extends JPanel {
         JTextArea output = new JTextArea();
         output.setEditable(false);
         output.setForeground(new Color(150, 50, 0));
+        output.setFont(new Font("Monospaced", Font.PLAIN, 13));
 
+        // 1. 위험도 확인 버튼
         JButton checkBtn = new JButton("내 위험도 확인하기");
         checkBtn.addActionListener(e -> {
             List<RiskAssessment> risks = patientController.getRisk(user.getId());
-
             output.setText("=== ⚠️ 뇌졸중 위험도 분석 리포트 ===\n\n");
             if (risks.isEmpty()) output.append("분석된 데이터가 없습니다.\n");
             else {
@@ -121,7 +122,24 @@ public class PatientPanel extends JPanel {
             output.setCaretPosition(output.getDocument().getLength());
         });
 
-        panel.add(checkBtn, BorderLayout.NORTH);
+        // 2. [NEW] 관련 정보 보기 버튼 (새 클래스 사용)
+        JButton infoBtn = new JButton("ℹ️ 관련 정보 보기 (내 수치 vs 기준)");
+        infoBtn.addActionListener(e -> {
+            // 가장 최신 기록 하나를 가져옴
+            List<HealthRecord> records = patientController.getRecords(user.getId());
+            HealthRecord lastRecord = records.isEmpty() ? null : records.get(records.size() - 1);
+
+            // 새 창(Dialog) 띄우기
+            Window parentWindow = SwingUtilities.getWindowAncestor(this);
+            new RiskInfoDialog(parentWindow, lastRecord).setVisible(true);
+        });
+
+        // 버튼 패널 구성
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
+        btnPanel.add(checkBtn);
+        btnPanel.add(infoBtn);
+
+        panel.add(btnPanel, BorderLayout.NORTH);
         panel.add(new JScrollPane(output), BorderLayout.CENTER);
         return panel;
     }
