@@ -41,7 +41,10 @@ public class PatientPanel extends JPanel {
         JButton addRecordBtn = new JButton("➕ 오늘의 건강 데이터 입력하기");
         addRecordBtn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
         addRecordBtn.setBackground(new Color(230, 240, 255));
+        JButton alertBtn = new JButton("🔔 알림 내역 확인");
+        alertBtn.setBackground(new Color(255, 250, 205));
         topPanel.add(addRecordBtn);
+        topPanel.add(alertBtn);
         add("North", topPanel);
 
         // ==========================================
@@ -71,6 +74,13 @@ public class PatientPanel extends JPanel {
 
         // 이벤트 리스너
         addRecordBtn.addActionListener(e -> openInputDialog());
+
+        // [NEW] 알림 버튼 클릭 시 다이얼로그 띄우기
+        alertBtn.addActionListener(e -> {
+            Window win = SwingUtilities.getWindowAncestor(this);
+            new AlertHistoryDialog(win, user.getId()).setVisible(true);
+        });
+
     }
 
     // ---------------------------------------------------------

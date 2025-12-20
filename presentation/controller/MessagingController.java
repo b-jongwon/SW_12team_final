@@ -1,4 +1,3 @@
-
 package presentation.controller;
 
 import domain.service.MessagingService;
@@ -13,7 +12,7 @@ public class MessagingController {
     private final MessagingService service = new MessagingService();
 
     public MessageThread createThread(Long patientId, Long caregiverId, Long doctorId) {
-        return service.getOrCreatePatientRoom(patientId); //임시로 이렇게 해둠
+        return service.getOrCreatePatientRoom(patientId);
     }
 
     public Message send(Long threadId, Long senderId, String msg) {
@@ -28,6 +27,7 @@ public class MessagingController {
         return service.getThreads(userId);
     }
 
+    // [확인] UI에서 호출하는 메서드
     public List<Alert> getAlerts(Long userId) {
         return service.getAlerts(userId);
     }

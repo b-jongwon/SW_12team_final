@@ -25,17 +25,41 @@ public class CaregiverPanel extends JPanel {
         this.caregiver = caregiver;
         setLayout(new BorderLayout());
 
-        // 1. 상단 제목
+        // -------------------------------------------------------------
+        // [수정 시작] 상단 영역: 제목 + 알림 버튼을 같이 넣기 위해 패널 사용
+        // -------------------------------------------------------------
+        JPanel topContainer = new JPanel(new BorderLayout());
+
+        // 1. 상단 제목 (기존 코드)
         JLabel title = new JLabel("🏡 가족 건강 모니터링 (" + caregiver.getName() + ")");
         title.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         title.setHorizontalAlignment(SwingConstants.CENTER);
         title.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-        add(title, BorderLayout.NORTH);
 
-        // 2. 중앙: 탭 패널 (가족 목록 vs 연결 요청)
+        // 2. [NEW] 알림 내역 확인 버튼 추가
+        JButton alertBtn = new JButton("🔔 위험 알림 내역");
+        JPanel rightBox = new JPanel(new FlowLayout(FlowLayout.RIGHT)); // 오른쪽 정렬용 패널
+        rightBox.add(alertBtn);
+
+        // 제목은 가운데, 버튼은 오른쪽에 배치
+        topContainer.add(title, BorderLayout.CENTER);
+        topContainer.add(rightBox, BorderLayout.EAST);
+
+        add(topContainer, BorderLayout.NORTH);
+
+        // 3. [NEW] 버튼 이벤트: 알림 내역 다이얼로그 열기
+        alertBtn.addActionListener(e -> {
+            Window window = SwingUtilities.getWindowAncestor(this);
+            new AlertHistoryDialog(window, caregiver.getId()).setVisible(true);
+        });
+        // -------------------------------------------------------------
+        // [수정 끝]
+        // -------------------------------------------------------------
+
+        // 4. 중앙: 탭 패널 (기존 코드 유지)
         JTabbedPane tab = new JTabbedPane();
         tab.addTab("내 가족 목록", createFamilyPanel());
-        tab.addTab("🔔 연결 요청", createRequestPanel()); // [NEW]
+        tab.addTab("🔔 연결 요청", createRequestPanel());
 
         add(tab, BorderLayout.CENTER);
     }

@@ -21,24 +21,15 @@ public class MessagingService {
                 });
     }
 
-    // [중요] 방 참여 로직
     public void joinRoom(Long patientId, Long doctorId, Long caregiverId) {
         MessageThread thread = getOrCreatePatientRoom(patientId);
-
-        if (doctorId != null) {
-            thread.setDoctorId(doctorId);
-        }
-        if (caregiverId != null) {
-            thread.addCaregiver(caregiverId);
-        }
-
+        if (doctorId != null) thread.setDoctorId(doctorId);
+        if (caregiverId != null) thread.addCaregiver(caregiverId);
         updateThread(thread);
     }
 
-    // [★ 수정] repo.findAllThreads() / repo.saveAllThreads() 로 변경
     private void updateThread(MessageThread updated) {
         List<MessageThread> all = repo.findAllThreads();
-
         for (int i = 0; i < all.size(); i++) {
             if (all.get(i).getId().equals(updated.getId())) {
                 all.set(i, updated);
@@ -57,7 +48,6 @@ public class MessagingService {
         Alert a = new Alert();
         a.create(senderId, "새 메시지가 도착했습니다.");
         repo.saveAlert(a);
-
         return m;
     }
 
@@ -65,7 +55,6 @@ public class MessagingService {
         return repo.getMessagesByThread(threadId);
     }
 
-    // [★ 수정] repo.findAllThreads() 사용 및 리스트 포함 여부 확인
     public List<MessageThread> getThreads(Long userId) {
         return repo.findAllThreads().stream()
                 .filter(t ->
@@ -75,6 +64,7 @@ public class MessagingService {
                 ).collect(Collectors.toList());
     }
 
+    // [확인] 알림 조회 연결
     public List<Alert> getAlerts(Long userId) {
         return repo.getAlerts(userId);
     }

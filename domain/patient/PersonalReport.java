@@ -1,138 +1,87 @@
-
 package domain.patient;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 개인 리포트: 한 환자의 일정 기간 건강 상태, 위험 요인, 목표 등을 요약.
- */
 public class PersonalReport {
     private Long id;
     private Long patientId;
+
     private LocalDateTime periodStart;
     private LocalDateTime periodEnd;
-    private String summaryText;
+    private String summaryText; // 종합 요약
 
-    // 그래프/차트 등의 데이터는 일단 문자열 리스트로 단순화
+    // 리스트 형태로 데이터 관리
     private List<String> trendChartData = new ArrayList<>();
     private List<String> topRiskFactors = new ArrayList<>();
     private List<String> recommendedGoals = new ArrayList<>();
 
-    // 합병증 관련 요약도 같이 포함 (별도 Report 클래스로 안 빼고 통합)
     private String complicationSummary;
-
     private LocalDateTime createdAt;
 
-    public PersonalReport() {}
-
-    public void init(Long patientId) {
-        this.patientId = patientId;
+    public PersonalReport() {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void setPeriod(LocalDateTime start, LocalDateTime end) {
-        this.periodStart = start;
-        this.periodEnd = end;
+    public PersonalReport(Long patientId, String string, String string1, String advice) {
     }
 
-    public void setSummaryText(String text) {
-        this.summaryText = text;
-    }
+    // 데이터 추가 편의 메서드
+    public void addTrendData(String data) { trendChartData.add(data); }
+    public void addRiskFactor(String factor) { topRiskFactors.add(factor); }
+    public void addGoal(String goal) { recommendedGoals.add(goal); }
 
-    public void addTrendData(String data) {
-        trendChartData.add(data);
-    }
-
-    public void addRiskFactor(String factor) {
-        topRiskFactors.add(factor);
-    }
-
-    public void setPatientId(Long patientId) {
-        this.patientId = patientId;
-    }
-
-    public LocalDateTime getPeriodStart() {
-        return periodStart;
-    }
-
-    public void setPeriodStart(LocalDateTime periodStart) {
-        this.periodStart = periodStart;
-    }
-
-    public LocalDateTime getPeriodEnd() {
-        return periodEnd;
-    }
-
-    public void setPeriodEnd(LocalDateTime periodEnd) {
-        this.periodEnd = periodEnd;
-    }
-
-    public String getSummaryText() {
-        return summaryText;
-    }
-
-    public List<String> getTrendChartData() {
-        return trendChartData;
-    }
-
-    public void setTrendChartData(List<String> trendChartData) {
-        this.trendChartData = trendChartData;
-    }
-
-    public List<String> getTopRiskFactors() {
-        return topRiskFactors;
-    }
-
-    public void setTopRiskFactors(List<String> topRiskFactors) {
-        this.topRiskFactors = topRiskFactors;
-    }
-
-    public List<String> getRecommendedGoals() {
-        return recommendedGoals;
-    }
-
-    public void setRecommendedGoals(List<String> recommendedGoals) {
-        this.recommendedGoals = recommendedGoals;
-    }
-
-    public String getComplicationSummary() {
-        return complicationSummary;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public PersonalReport(Long id, Long patientId, LocalDateTime periodStart, LocalDateTime periodEnd, String summaryText, List<String> trendChartData, List<String> topRiskFactors, List<String> recommendedGoals, String complicationSummary, LocalDateTime createdAt) {
-        this.id = id;
-        this.patientId = patientId;
-        this.periodStart = periodStart;
-        this.periodEnd = periodEnd;
-        this.summaryText = summaryText;
-        this.trendChartData = trendChartData;
-        this.topRiskFactors = topRiskFactors;
-        this.recommendedGoals = recommendedGoals;
-        this.complicationSummary = complicationSummary;
-        this.createdAt = createdAt;
-    }
-
-    public void addGoal(String goal) {
-        recommendedGoals.add(goal);
-    }
-
-    public void setComplicationSummary(String complicationSummary) {
-        this.complicationSummary = complicationSummary;
-    }
-
-    public String summarize() {
-        return "요약: " + summaryText + (complicationSummary != null ? " / 합병증: " + complicationSummary : "");
-    }
-
-    // --- getter/setter 최소한만 제공 (필요하면 IDE로 확장) ---
+    // Getter & Setter
     public void setId(Long id) { this.id = id; }
     public Long getId() { return id; }
+    public void setPatientId(Long patientId) { this.patientId = patientId; }
     public Long getPatientId() { return patientId; }
+    public void setPeriod(LocalDateTime start, LocalDateTime end) {
+        this.periodStart = start; this.periodEnd = end;
+    }
+    public void setSummaryText(String text) { this.summaryText = text; }
+    public void setComplicationSummary(String summary) { this.complicationSummary = summary; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    // [핵심] UI(Dialog)에서 텍스트로 보여주기 위한 포맷팅 메서드 (추가됨)
+    public String getFormatText() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("============================================\n");
+        sb.append("       📄 개인 맞춤형 건강 리포트 (C_3)\n");
+        sb.append("       발행일: ").append(createdAt.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))).append("\n");
+        if (periodStart != null && periodEnd != null) {
+            sb.append("       분석 기간: ").append(periodStart.format(fmt)).append(" ~ ").append(periodEnd.format(fmt)).append("\n");
+        }
+        sb.append("============================================\n\n");
+
+        sb.append("[1] 📋 종합 요약\n");
+        sb.append("   \"").append(summaryText).append("\"\n\n");
+
+        sb.append("[2] 📈 건강 변화 추이\n");
+        if (trendChartData.isEmpty()) sb.append("   - 분석된 추세 데이터가 없습니다.\n");
+        else for (String t : trendChartData) sb.append("   - ").append(t).append("\n");
+        sb.append("\n");
+
+        sb.append("[3] ⚠️ 발견된 위험 요인\n");
+        if (topRiskFactors.isEmpty()) sb.append("   - 특별한 위험 요인이 발견되지 않았습니다. (양호)\n");
+        else for (String r : topRiskFactors) sb.append("   - ").append(r).append("\n");
+        sb.append("\n");
+
+        if (complicationSummary != null && !complicationSummary.isEmpty()) {
+            sb.append("[4] 📉 합병증 위험 분석\n");
+            sb.append("   - ").append(complicationSummary).append("\n\n");
+        }
+
+        sb.append("[5] 🩺 닥터 AI의 권장 목표\n");
+        if (recommendedGoals.isEmpty()) sb.append("   - 현재 상태 유지를 권장합니다.\n");
+        else for (String g : recommendedGoals) sb.append("   - ").append(g).append("\n");
+
+        sb.append("\n============================================");
+
+        return sb.toString();
+    }
 }
