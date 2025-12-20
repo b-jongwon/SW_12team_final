@@ -1,7 +1,7 @@
 package ui;
 
 import domain.patient.HealthRecord;
-
+import domain.patient.RiskConfiguration;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -56,7 +56,8 @@ public class HealthRecordRenderer extends JPanel implements ListCellRenderer<Hea
         riskLabel.setText("위험요인: " + (value.getMainRiskFactors().isEmpty() ? "없음" : value.getMainRiskFactors()));
 
         // ★ 시각화 핵심: 위험 수치에 따라 배경색 변경 (Traffic Light System)
-        boolean isHighRisk = value.getSystolicBp() >= 140 || value.getBloodSugar() >= 126;
+        boolean isHighRisk = value.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
+                value.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD;
 
         if (isSelected) {
             setBackground(list.getSelectionBackground());

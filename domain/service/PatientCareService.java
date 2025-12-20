@@ -8,6 +8,7 @@ import domain.content.ContentItem;
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
 import domain.patient.*;
+import domain.patient.RiskConfiguration;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -176,19 +177,13 @@ public class PatientCareService {
         double riskScore = 0.0;
         List<String> factors = new ArrayList<>();
 
-        // 1. 수축기 혈압 가중치
-        if (r.getSystolicBp() >= 160) {
-            riskScore += 50; factors.add("심각한 고혈압");
-        } else if (r.getSystolicBp() >= 140) {
-            riskScore += 30; factors.add("고혈압");
-        } else if (r.getSystolicBp() >= 130) {
-            riskScore += 10;
-        }
+        double highBpLimit = RiskConfiguration.BP_SYSTOLIC_THRESHOLD + 20;
 
-        // 2. 혈당 가중치
-        if (r.getBloodSugar() >= 126) {
-            riskScore += 20; factors.add("당뇨");
-        }
+        if (r.getSystolicBp() >= highBpLimit) riskScore += 30;
+        else if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 15;
+
+        // 혈당도 마찬가지
+        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 20;
 
         // 3. 흡연 여부
         if ("Yes".equalsIgnoreCase(r.getSmoking())) {

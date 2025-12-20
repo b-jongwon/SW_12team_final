@@ -1,6 +1,7 @@
 package ui;
 
 import domain.patient.HealthRecord;
+import domain.patient.RiskConfiguration;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -83,23 +84,21 @@ public class RiskRenderer extends JPanel implements ListCellRenderer<HealthRecor
 
         // 2. ★ 시각화 핵심: 위험 수치(고혈압/고혈당)에 따른 배경색 변경 (Traffic Light System)
         // 기준: 수축기 혈압 140 이상 OR 혈당 126 이상
-        boolean isHighRisk = value.getSystolicBp() >= 140 || value.getBloodSugar() >= 126;
+        boolean isHighRisk = value.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
+                value.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD;
 
         if (isSelected) {
-            // 리스트에서 선택되었을 때 (파란색 계열)
             setBackground(new Color(220, 230, 255));
-            dateLabel.setForeground(Color.BLUE);
+            // ...
         } else {
-            // 선택 안 되었을 때 (위험도에 따라 분기)
             if (isHighRisk) {
-                setBackground(new Color(255, 230, 230)); // 연한 빨강 (경고)
-                dateLabel.setForeground(Color.RED);      // 날짜 글씨도 빨갛게 강조
+                setBackground(new Color(255, 235, 235)); // 위험 시 붉은 배경
             } else {
-                setBackground(Color.WHITE);              // 정상: 흰색
-                dateLabel.setForeground(Color.BLACK);
+                setBackground(Color.WHITE);
             }
+            // ...
         }
 
-        return this; // 완성된 패널(나 자신)을 반환
+        return this;
     }
 }

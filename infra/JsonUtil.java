@@ -47,12 +47,13 @@ public class JsonUtil {
             .registerTypeAdapter(LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, typeOfT, context) ->
                     LocalDateTime.parse(json.getAsString()))
 
-            // 2. [추가됨] User 상속 구조 처리 어댑터 등록
+            // 2. User 상속 구조 처리 어댑터 등록
             .registerTypeAdapter(User.class, userDeserializer)
-
+            .setPrettyPrinting() // (선택사항) 파일 저장 시 줄바꿈/들여쓰기 적용
             .create();
 
-    public static <T> T readJson(String path, Type typeOfT) {
+    // [수정] synchronized 추가: 동시에 여러 스레드가 읽으려 할 때 충돌 방지
+    public static synchronized <T> T readJson(String path, Type typeOfT) {
         File file = new File(path);
         if (!file.exists()) return null;
         try (Reader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
@@ -63,7 +64,8 @@ public class JsonUtil {
         }
     }
 
-    public static void writeJson(String path, Object data) {
+    // [수정] synchronized 추가: 동시에 여러 스레드가 쓰려고 할 때 데이터 유실 방지
+    public static synchronized void writeJson(String path, Object data) {
         File file = new File(path);
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();

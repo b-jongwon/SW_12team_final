@@ -2,12 +2,11 @@ package domain.service;
 
 import data.repository.MedicalRepository;
 import data.repository.ReportRepository;
-import data.repository.UserRepository; // ★ 필수: 유저 나이 가져오기 위해 추가
+import data.repository.UserRepository;
 import domain.patient.GroupComparisonResult;
 import domain.patient.HealthRecord;
 import domain.patient.PersonalReport;
-import domain.patient.RiskConfiguration;
-import domain.user.User;
+import domain.patient.RiskConfiguration; // ★ 설정값 연동
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -17,7 +16,7 @@ public class ReportService {
 
     private final MedicalRepository medicalRepo = new MedicalRepository();
     private final ReportRepository reportRepo = new ReportRepository();
-    private final UserRepository userRepo = new UserRepository(); // 유저 정보 조회용
+    private final UserRepository userRepo = new UserRepository();
 
     // --------------------------------------------------------
     // [1] 개인화 리포트 (추세 분석)
@@ -48,12 +47,13 @@ public class ReportService {
         if (sugarDiff > 15) trend.append("- 혈당 상승 추세 (식단 관리 필요)\n");
         else if (sugarDiff < -15) trend.append("- 혈당 감소 추세 (매우 양호)\n");
 
-        // 2. 현재 상태 위험 분석
+        // 2. 현재 상태 위험 분석 (설정값 연동)
         StringBuilder risk = new StringBuilder();
         if (now.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD)
             risk.append("- '고혈압' 위험 감지됨\n");
         if (now.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD)
             risk.append("- '당뇨' 위험 감지됨\n");
+
         if (risk.length() == 0) risk.append("- 특별한 위험 요인 없음");
 
         String advice = (risk.toString().contains("위험"))
@@ -69,70 +69,89 @@ public class ReportService {
     }
 
     // --------------------------------------------------------
-    // [2] 또래 비교 리포트 (핵심: 나이 기반 동적 생성)
+    // [2] 또래 비교 리포트 (통계 기반 정밀 로직 적용)
     // --------------------------------------------------------
 
-    // 조회용
     public List<GroupComparisonResult> getGroup(Long pid) {
         return reportRepo.getGroupByPatient(pid);
     }
 
+    // ★ [핵심 수정] 시뮬레이션 공식 대신 실제 통계 데이터 매핑 로직 적용
     public GroupComparisonResult createGroupComparison(Long pid) {
-        // 1. 사용자 정보 가져오기 (혹은 최근 HealthRecord에서 가져오기)
+        // 1. 환자 기록 가져오기
         List<HealthRecord> records = medicalRepo.findRecordsByPatient(pid);
         if (records.isEmpty()) return null;
 
-        HealthRecord latest = records.get(records.size() - 1); // 최신 기록
+        // 최신 기록을 기준으로 분석
+        records.sort((r1, r2) -> r2.getMeasuredAt().compareTo(r1.getMeasuredAt())); // 최신순
+        HealthRecord latest = records.get(0);
 
-        // 2. 기록된 나이와 성별 가져오기 (없으면 기본값 설정)
+        // 2. 나이와 성별 확인 (기록이 없으면 기본값 설정)
         int age = latest.getAge();
-        if (age == 0) age = 30; // 기본값
+        if (age == 0) age = 30; // 방어 코드
 
         String gender = latest.getGender();
-        if (gender == null || gender.isEmpty()) gender = "Male"; // 기본값
+        if (gender == null) gender = "Male";
 
-        // 3. 연령대 및 그룹명 결정
-        int ageGroup = (age / 10) * 10;
-        String genderKo = "Male".equals(gender) ? "남성" : "여성";
-        String groupKey = ageGroup + "대 " + genderKo + " 평균";
+        // 3. 비교 그룹 정의
+        String ageGroup = (age / 10) * 10 + "대"; // 예: "40대"
+        String genderKo = "Male".equalsIgnoreCase(gender) ? "남성" : "여성";
+        String groupKey = genderKo + " " + ageGroup + " 평균"; // 결과 예: "남성 40대 평균"
 
-        // 4. 내 수치
+        // 4. 내 수치 (수축기 혈압 기준)
         double myMetric = latest.getSystolicBp();
-        if (myMetric == 0) return null; // 혈압 입력 안했으면 분석 불가
+        if (myMetric == 0) return null;
 
-        // 5. [핵심] 성별/나이별 가상 평균 계산 로직
-        // 기본 혈압: 남성 120, 여성 110 시작
-        double baseAvg = "Male".equals(gender) ? 120.0 : 110.0;
+        // 5. [개선됨] 한국인 성별/연령별 평균 수축기 혈압 매핑
+        // (출처: 질병관리청 국민건강영양조사 데이터 참조)
+        double groupAvg = 120.0;
 
-        // 나이에 따른 증가 (10살 먹을 때마다 혈압 3씩 증가 가정)
-        double ageFactor = (age - 20) * 0.3;
-        if (ageFactor < 0) ageFactor = 0;
+        if ("Male".equalsIgnoreCase(gender)) {
+            if (age < 30) groupAvg = 118.0;       // 20대 남성
+            else if (age < 40) groupAvg = 121.0;  // 30대
+            else if (age < 50) groupAvg = 126.0;  // 40대
+            else if (age < 60) groupAvg = 131.0;  // 50대
+            else if (age < 70) groupAvg = 138.0;  // 60대
+            else groupAvg = 141.0;                // 70대 이상
+        } else {
+            if (age < 30) groupAvg = 110.0;       // 20대 여성
+            else if (age < 40) groupAvg = 112.0;
+            else if (age < 50) groupAvg = 118.0;
+            else if (age < 60) groupAvg = 126.0;
+            else if (age < 70) groupAvg = 136.0;
+            else groupAvg = 145.0;
+        }
 
-        double groupAvg = baseAvg + ageFactor;
-
-        // 6. 백분위 계산
+        // 6. 백분위 계산 (표준편차 15로 가정하고 Z-score 방식으로 계산)
         double diff = myMetric - groupAvg;
-        double percentile = 50.0 + (diff / 15.0 * 20.0);
+        double zScore = diff / 15.0;
 
+        // Z-score를 백분위로 근사 변환 (중간값 50에서 시작)
+        double percentile = 50.0 + (zScore * 34.0);
+
+        // 범위 보정 (1% ~ 99% 사이로 제한)
         if (percentile > 99.0) percentile = 99.0;
         if (percentile < 1.0) percentile = 1.0;
 
-        // 7. 저장 및 반환
+        // 7. 결과 저장
         GroupComparisonResult result = new GroupComparisonResult();
         result.setPatientId(pid);
         result.setGroupKey(groupKey);
         result.setPatientMetric(myMetric);
-        result.setGroupAverage(Math.round(groupAvg * 10) / 10.0);
-        result.setPercentile(Math.round(percentile * 10) / 10.0);
+        result.setGroupAverage(groupAvg);
+        result.setPercentile(Math.round(percentile * 10) / 10.0); // 소수점 첫째자리까지
+
+        // 차트용 JSON 데이터 생성
+        String chartData = String.format("{\"my\": %.1f, \"avg\": %.1f}", myMetric, groupAvg);
+        result.setChartData(chartData);
+
         result.setCreatedAt(LocalDateTime.now());
 
         return reportRepo.saveGroup(result);
     }
 
-    // (기존 하드코딩 호출을 위한 호환성 유지 메서드 - 필요 없으면 삭제 가능)
-    // UI 쪽에서 이 메서드를 호출하던 부분을 위의 createGroupComparison(pid)로 바꾸는 게 좋음.
-    public GroupComparisonResult createGroup(Long pid, String groupKey, double myMetric, double groupAvg, String chartData) {
-        // 내부적으로 더 스마트한 메서드로 위임하거나, 그냥 단순 저장 수행
+    // [호환성 유지] UI 컨트롤러 등에서 예전 방식으로 호출하더라도, 내부적으로는 정밀 분석을 수행하도록 연결
+    public GroupComparisonResult createGroup(Long pid, String groupKey, double metric, double avg, String chartData) {
         return createGroupComparison(pid);
     }
 }

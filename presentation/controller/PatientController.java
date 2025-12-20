@@ -12,7 +12,24 @@ import java.util.List;
 
 public class PatientController {
 
-    private final PatientCareService service = new PatientCareService();
+    // [수정 1] final로 선언하되, 여기서 바로 new 하지 않음
+    private final PatientCareService service;
+
+    // [수정 2] 기본 생성자 (기존 코드 호환용)
+    // UI(PatientPanel)에서 new PatientController() 라고 부르면 이쪽이 실행됩니다.
+    // 내부에서 스스로 서비스를 생성합니다.
+    public PatientController() {
+        this.service = new PatientCareService();
+    }
+
+    // [수정 3] 생성자 주입 (테스트/확장용)
+    // 나중에 테스트할 때: new PatientController(new MockService()) 처럼 가짜를 넣어줄 수 있음.
+    // "외부에서 서비스를 주입받는다"는 의존성 주입(DI)의 핵심입니다.
+    public PatientController(PatientCareService service) {
+        this.service = service;
+    }
+
+    // --- 아래 메서드들은 변경 사항 없음 (그대로 사용) ---
 
     public HealthRecord addRecord(Long pid, int age, String gender, int sys, int dia, double sugar,
                                   String smoking, String drinking, String activity,
