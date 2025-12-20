@@ -9,7 +9,7 @@ public class AdminService {
 
     private final ContentRepository repo = new ContentRepository();
 
-    // 공지사항 등록
+    // [핵심] 공지사항 등록 및 저장
     public Announcement postAnnouncement(String title, String content) {
         Announcement a = new Announcement();
         a.create(title, content);
@@ -20,10 +20,10 @@ public class AdminService {
         return repo.findAllAnnouncements();
     }
 
-    // [수정] 건강 콘텐츠 등록 (targetRisk 인자 추가)
+    // 건강 콘텐츠 등록
     public ContentItem createContent(String category, String title, String desc, String targetRisk) {
         ContentItem item = new ContentItem();
-        item.create(category, title, desc, targetRisk); // 수정된 create 호출
+        item.create(category, title, desc, targetRisk);
         return repo.saveContent(item);
     }
 
