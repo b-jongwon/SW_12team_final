@@ -5,9 +5,11 @@ import data.repository.MedicalRepository;
 import data.repository.UserRepository;
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
+import domain.patient.HealthRecord;
 import domain.patient.PatientAssignment;
 import domain.patient.RiskAssessment;
 import data.repository.UserRepository;
+import domain.patient.RiskConfiguration;
 import domain.user.Patient;
 import domain.user.User;
 
@@ -99,9 +101,7 @@ public class DoctorService {
                 loginId = pOpt.get().getLoginId();
             }
 
-            String currentStatus = "데이터 없음";
-            List<RiskAssessment> risks = medicalRepo.findRiskByPatient(patientId);
-            if (!risks.isEmpty()) currentStatus = risks.get(risks.size() - 1).getRiskLevel();
+            String currentStatus = calculateCurrentRiskLevel(getLatestRecord(patientId));
 
             result.add(new PatientSummary(loginId, patientName, currentStatus, patientId, assign.getId()));
         }
@@ -123,7 +123,35 @@ public class DoctorService {
     public List<domain.patient.HealthRecord> getPatientHealthRecords(Long patientId) {
         return medicalRepo.findRecordsByPatient(patientId);
     }
+    private HealthRecord getLatestRecord(Long patientId) {
+        List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
+        if (records.isEmpty()) return null;
 
+        return records.stream()
+                .filter(r -> r.getMeasuredAt() != null)
+                .max(java.util.Comparator.comparing(HealthRecord::getMeasuredAt))
+                .orElse(records.get(records.size() - 1));
+    }
+
+    private String calculateCurrentRiskLevel(HealthRecord r) {
+        if (r == null) return "데이터 없음";
+
+        double score = 0.0;
+
+        RiskConfiguration.PersonalCriteria c =
+                RiskConfiguration.getPersonalizedCriteria(r.getAge(), r.getGender());
+
+        if (r.getSystolicBp() >= c.maxSys || r.getDiastolicBp() >= c.maxDia) score += 40.0;
+        else if (r.getSystolicBp() >= (c.maxSys - 20)) score += 15.0;
+
+        if (r.getBloodSugar() >= c.maxSugar) score += 30.0;
+        if (r.getBmi() >= c.maxBmi) score += 15.0;
+        if ("Yes".equalsIgnoreCase(r.getSmoking())) score += 15.0;
+
+        if (score >= 60) return "고위험";
+        if (score >= 30) return "주의";
+        return "정상";
+    }
     public List<DoctorNote> getPatientDoctorNotes(Long patientId) {
         return medicalRepo.findNotesByPatient(patientId);
     }

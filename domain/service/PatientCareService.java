@@ -130,11 +130,15 @@ public class PatientCareService {
     // [4] 맞춤형 콘텐츠 추천
     // --------------------------------------------------------------------------
     public List<ContentItem> getRecommendedContents(Long patientId) {
-        List<RiskAssessment> risks = getRisk(patientId);
-        String currentLevel = "정상";
-        if (!risks.isEmpty()) {
-            currentLevel = risks.get(risks.size() - 1).getRiskLevel();
-        }
+        List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
+        if (records.isEmpty()) return contentRepo.findContentsByRisk("정상");
+
+        HealthRecord latest = records.stream()
+                .filter(r -> r.getMeasuredAt() != null)
+                .max(java.util.Comparator.comparing(HealthRecord::getMeasuredAt))
+                .orElse(records.get(records.size() - 1));
+
+        String currentLevel = calculateRiskDynamic(latest).getRiskLevel(); // 현재 기준으로 즉시 계산
         return contentRepo.findContentsByRisk(currentLevel);
     }
 
@@ -280,7 +284,10 @@ public class PatientCareService {
         List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
         if (records.isEmpty()) return Collections.emptyList();
 
-        HealthRecord last = records.get(records.size() - 1); // 최신 기록
+        HealthRecord last = records.stream()
+                .filter(r -> r.getMeasuredAt() != null)
+                .max(java.util.Comparator.comparing(HealthRecord::getMeasuredAt))
+                .orElse(records.get(records.size() - 1));
         List<GroupComparisonResult> simulations = new ArrayList<>();
 
         // 1. [나이대 비교] 내 점수 vs 같은 나이대 평균 점수
