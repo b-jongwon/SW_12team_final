@@ -5,6 +5,7 @@ import domain.service.DoctorService.PatientSummary;
 import domain.user.User;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.time.LocalDateTime;
@@ -139,6 +140,28 @@ public class DoctorPanel extends JPanel {
         };
         patientTable = new JTable(tableModel);
 
+        patientTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
+                // 기본 스타일 가져오기
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                String status = (String) value;
+
+                // 텍스트 색상 변경 로직
+                if ("고위험".equals(status)) {
+                    c.setForeground(Color.RED);                   // 빨간색
+                    c.setFont(c.getFont().deriveFont(Font.BOLD)); // 굵게
+                } else if ("주의".equals(status)) {
+                    c.setForeground(new Color(255, 140, 0));      // 오렌지색
+                    c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                } else {
+                    c.setForeground(Color.BLACK);                 // 검은색 (기본)
+                    c.setFont(c.getFont().deriveFont(Font.PLAIN));
+                }
+                return c;
+            }
+        });
         // [NEW] 더블클릭 시 상세 보기 팝업 (히스토리 보기)
         patientTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
