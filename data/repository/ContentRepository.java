@@ -2,10 +2,11 @@ package data.repository;
 
 import infra.BaseJsonRepository;
 import infra.IdGenerator;
-import domain.content.Announcement; // 패키지 확인!
-import domain.content.ContentItem;  // 패키지 확인!
+import domain.content.Announcement;
+import domain.content.ContentItem;
 import com.google.gson.reflect.TypeToken;
 import java.util.List;
+import java.util.stream.Collectors; // import 추가
 
 public class ContentRepository {
 
@@ -26,6 +27,15 @@ public class ContentRepository {
 
     public List<ContentItem> findAllContents() {
         return contentRepo.findAll();
+    }
+
+    // [NEW] 위험도 기반 필터링 조회
+    // "ALL"인 콘텐츠 OR 내 위험도와 일치하는 콘텐츠만 반환
+    public List<ContentItem> findContentsByRisk(String userRiskLevel) {
+        return contentRepo.findAll().stream()
+                .filter(item -> "ALL".equals(item.getTargetRisk()) ||
+                        item.getTargetRisk().equals(userRiskLevel))
+                .collect(Collectors.toList());
     }
 
     // --- 공지사항 (Announcement) ---

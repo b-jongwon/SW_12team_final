@@ -20,10 +20,10 @@ public class AdminService {
         return repo.findAllAnnouncements();
     }
 
-    // 건강 콘텐츠 등록
-    public ContentItem createContent(String category, String title, String desc) {
+    // [수정] 건강 콘텐츠 등록 (targetRisk 인자 추가)
+    public ContentItem createContent(String category, String title, String desc, String targetRisk) {
         ContentItem item = new ContentItem();
-        item.create(category, title, desc);
+        item.create(category, title, desc, targetRisk); // 수정된 create 호출
         return repo.saveContent(item);
     }
 

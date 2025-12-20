@@ -70,6 +70,8 @@ public class PatientPanel extends JPanel {
         // 탭 5: [NEW] 진료 및 예약 내역 (위치 수정됨!)
         tabbedPane.addTab("🏥 진료 및 예약", createMedicalPanel());
 
+        tabbedPane.addTab("📘 맞춤형 건강 가이드", createGuidePanel());
+
         add("Center", tabbedPane);
 
         // 이벤트 리스너
@@ -387,7 +389,67 @@ public class PatientPanel extends JPanel {
         loadData.run();
         return wrapper;
     }
+    private JPanel createGuidePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
 
+        // 리스트 모델
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        JList<String> contentList = new JList<>(listModel);
+
+        // 상세 내용 영역
+        JTextArea detailArea = new JTextArea();
+        detailArea.setEditable(false);
+        detailArea.setLineWrap(true);
+        detailArea.setFont(new Font("맑은 고딕", Font.PLAIN, 14));
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                new JScrollPane(contentList), new JScrollPane(detailArea));
+        split.setDividerLocation(250);
+
+        JButton loadBtn = new JButton("내 맞춤 가이드 불러오기");
+
+        loadBtn.addActionListener(e -> {
+            listModel.clear();
+            detailArea.setText("");
+
+            // 컨트롤러 -> 서비스 -> 내 위험도에 맞는 글만 가져옴 (ALL + 내 위험도)
+            List<domain.content.ContentItem> items = patientController.getContents(user.getId());
+
+            if (items.isEmpty()) {
+                listModel.addElement("등록된 맞춤 가이드가 없습니다.");
+            } else {
+                for (domain.content.ContentItem item : items) {
+                    // 리스트에는 "[고위험] [식단] 제목" 형태로 표시
+                    listModel.addElement(item.getSummary());
+                }
+            }
+        });
+
+        // 리스트 클릭 시 상세 내용 표시
+        contentList.addListSelectionListener(evt -> {
+            if (!evt.getValueIsAdjusting()) {
+                int idx = contentList.getSelectedIndex();
+                if (idx != -1) {
+                    List<domain.content.ContentItem> items = patientController.getContents(user.getId());
+                    if (idx < items.size()) {
+                        domain.content.ContentItem selected = items.get(idx);
+                        detailArea.setText(
+                                "제목: " + selected.getTitle() + "\n" +
+                                        "카테고리: " + selected.getCategory() + "\n" +
+                                        "대상: " + selected.getTargetRisk() + "\n\n" +
+                                        selected.getDescription()
+                        );
+                        detailArea.setCaretPosition(0);
+                    }
+                }
+            }
+        });
+
+        panel.add(loadBtn, BorderLayout.NORTH);
+        panel.add(split, BorderLayout.CENTER);
+
+        return panel;
+    }
     // ==========================================
     // [헬퍼] 입력 다이얼로그
     // ==========================================

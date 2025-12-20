@@ -35,6 +35,117 @@ public class AdminPanel extends JPanel {
 
         add(tabbedPane, BorderLayout.CENTER);
     }
+
+    // ----------------------------------------------------
+    // 탭 1: 공지사항 관리 패널 (복구됨)
+    // ----------------------------------------------------
+    private JPanel createAnnouncementPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // 입력 폼
+        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+        JTextField titleField = new JTextField();
+        JTextField contentField = new JTextField();
+        JButton addBtn = new JButton("공지 등록");
+
+        inputPanel.add(new JLabel("공지 제목:")); inputPanel.add(titleField);
+        inputPanel.add(new JLabel("공지 내용:")); inputPanel.add(contentField);
+
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.add(inputPanel, BorderLayout.CENTER);
+        topContainer.add(addBtn, BorderLayout.EAST);
+        panel.add(topContainer, BorderLayout.NORTH);
+
+        // 목록 테이블
+        String[] cols = {"ID", "제목", "내용", "작성일"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // 이벤트: 등록
+        addBtn.addActionListener(e -> {
+            controller.postAnnouncement(titleField.getText(), contentField.getText());
+            JOptionPane.showMessageDialog(this, "공지사항이 등록되었습니다.");
+            loadAnnouncements(model);
+            titleField.setText(""); contentField.setText("");
+        });
+
+        loadAnnouncements(model); // 초기 로드
+        return panel;
+    }
+
+    private void loadAnnouncements(DefaultTableModel model) {
+        model.setRowCount(0);
+        List<Announcement> list = controller.getAnnouncements();
+        for (Announcement a : list) {
+            model.addRow(new Object[]{a.getId(), a.getTitle(), a.getContent(), a.getCreatedAt()});
+        }
+    }
+
+    // ----------------------------------------------------
+    // 탭 2: 건강 콘텐츠 관리 패널 (업데이트됨)
+    // ----------------------------------------------------
+    private JPanel createContentPanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // 입력 폼 (4줄)
+        JPanel inputPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+
+        String[] cats = {"운동", "식단", "상식"};
+        JComboBox<String> catCombo = new JComboBox<>(cats);
+
+        // [NEW] 타겟 위험군 콤보박스
+        String[] risks = {"ALL", "고위험", "주의", "정상"};
+        JComboBox<String> riskCombo = new JComboBox<>(risks);
+
+        JTextField titleField = new JTextField();
+        JTextField descField = new JTextField();
+        JButton addBtn = new JButton("콘텐츠 등록");
+
+        inputPanel.add(new JLabel("카테고리:")); inputPanel.add(catCombo);
+        inputPanel.add(new JLabel("타겟 위험군:")); inputPanel.add(riskCombo);
+        inputPanel.add(new JLabel("제목:")); inputPanel.add(titleField);
+        inputPanel.add(new JLabel("설명:")); inputPanel.add(descField);
+
+        JPanel topContainer = new JPanel(new BorderLayout());
+        topContainer.add(inputPanel, BorderLayout.CENTER);
+        topContainer.add(addBtn, BorderLayout.EAST);
+        panel.add(topContainer, BorderLayout.NORTH);
+
+        // 목록 테이블 (타겟 컬럼 포함)
+        String[] cols = {"ID", "카테고리", "타겟", "제목", "설명"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0);
+        JTable table = new JTable(model);
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // 이벤트: 등록
+        addBtn.addActionListener(e -> {
+            controller.createContent(
+                    (String)catCombo.getSelectedItem(),
+                    titleField.getText(),
+                    descField.getText(),
+                    (String)riskCombo.getSelectedItem()
+            );
+            JOptionPane.showMessageDialog(this, "건강 콘텐츠가 등록되었습니다.");
+            loadContents(model);
+            titleField.setText(""); descField.setText("");
+        });
+
+        loadContents(model); // 초기 로드
+        return panel;
+    }
+
+    private void loadContents(DefaultTableModel model) {
+        model.setRowCount(0);
+        List<ContentItem> list = controller.getAllContents();
+        for (ContentItem c : list) {
+            model.addRow(new Object[]{c.getId(), c.getCategory(), c.getTargetRisk(), c.getTitle(), c.getDescription()});
+        }
+    }
+
+    // ----------------------------------------------------
+    // 탭 3: 위험도 기준 설정 패널 (복구됨)
+    // ----------------------------------------------------
     private JPanel createConfigPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -101,100 +212,5 @@ public class AdminPanel extends JPanel {
         panel.add(bottomPanel, BorderLayout.SOUTH);
 
         return panel;
-    }
-
-    // ----------------------------------------------------
-    // 탭 1: 공지사항 관리 패널
-    // ----------------------------------------------------
-    private JPanel createAnnouncementPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-
-        // 입력 폼
-        JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-        JTextField titleField = new JTextField();
-        JTextField contentField = new JTextField();
-        JButton addBtn = new JButton("공지 등록");
-
-        inputPanel.add(new JLabel("공지 제목:")); inputPanel.add(titleField);
-        inputPanel.add(new JLabel("공지 내용:")); inputPanel.add(contentField);
-
-        JPanel topContainer = new JPanel(new BorderLayout());
-        topContainer.add(inputPanel, BorderLayout.CENTER);
-        topContainer.add(addBtn, BorderLayout.EAST);
-        panel.add(topContainer, BorderLayout.NORTH);
-
-        // 목록 테이블
-        String[] cols = {"ID", "제목", "내용", "작성일"};
-        DefaultTableModel model = new DefaultTableModel(cols, 0);
-        JTable table = new JTable(model);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
-
-        // 이벤트: 등록
-        addBtn.addActionListener(e -> {
-            controller.announce(titleField.getText(), contentField.getText());
-            JOptionPane.showMessageDialog(this, "공지사항이 등록되었습니다.");
-            loadAnnouncements(model);
-            titleField.setText(""); contentField.setText("");
-        });
-
-        loadAnnouncements(model); // 초기 로드
-        return panel;
-    }
-
-    private void loadAnnouncements(DefaultTableModel model) {
-        model.setRowCount(0);
-        List<Announcement> list = controller.getAnnouncements();
-        for (Announcement a : list) {
-            model.addRow(new Object[]{a.getId(), a.getTitle(), a.getContent(), a.getCreatedAt()});
-        }
-    }
-
-    // ----------------------------------------------------
-    // 탭 2: 건강 콘텐츠 관리 패널
-    // ----------------------------------------------------
-    private JPanel createContentPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-
-        // 입력 폼
-        JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-        String[] cats = {"운동", "식단", "상식"};
-        JComboBox<String> catCombo = new JComboBox<>(cats);
-        JTextField titleField = new JTextField();
-        JTextField descField = new JTextField();
-        JButton addBtn = new JButton("콘텐츠 등록");
-
-        inputPanel.add(new JLabel("카테고리:")); inputPanel.add(catCombo);
-        inputPanel.add(new JLabel("제목:")); inputPanel.add(titleField);
-        inputPanel.add(new JLabel("설명:")); inputPanel.add(descField);
-
-        JPanel topContainer = new JPanel(new BorderLayout());
-        topContainer.add(inputPanel, BorderLayout.CENTER);
-        topContainer.add(addBtn, BorderLayout.EAST);
-        panel.add(topContainer, BorderLayout.NORTH);
-
-        // 목록 테이블
-        String[] cols = {"ID", "카테고리", "제목", "설명"};
-        DefaultTableModel model = new DefaultTableModel(cols, 0);
-        JTable table = new JTable(model);
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
-
-        // 이벤트: 등록
-        addBtn.addActionListener(e -> {
-            controller.addContent((String)catCombo.getSelectedItem(), titleField.getText(), descField.getText());
-            JOptionPane.showMessageDialog(this, "건강 콘텐츠가 등록되었습니다.");
-            loadContents(model);
-            titleField.setText(""); descField.setText("");
-        });
-
-        loadContents(model); // 초기 로드
-        return panel;
-    }
-
-    private void loadContents(DefaultTableModel model) {
-        model.setRowCount(0);
-        List<ContentItem> list = controller.getContents();
-        for (ContentItem c : list) {
-            model.addRow(new Object[]{c.getId(), c.getCategory(), c.getTitle(), c.getDescription()});
-        }
     }
 }

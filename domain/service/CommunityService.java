@@ -14,10 +14,10 @@ public class CommunityService {
 
     private final CommunityRepository repo = new CommunityRepository();
 
-    // 게시글 생성 (authorName 포함)
+    // 게시글 생성
     public CommunityPost createPost(Long authorId, String authorName, String title, String content) {
         CommunityPost p = new CommunityPost();
-        p.create(authorId, title, authorName, content);  // ← 시그니처 맞춰서 호출
+        p.create(authorId, title, authorName, content);
         return repo.savePost(p);
     }
 
@@ -39,9 +39,11 @@ public class CommunityService {
         return repo.getComments(postId);
     }
 
-    public ContentItem createContent(String category, String title, String description) {
+    // [수정] 인자 4개로 변경 (targetRisk 추가) -> 오류 해결
+    public ContentItem createContent(String category, String title, String description, String targetRisk) {
         ContentItem item = new ContentItem();
-        item.create(category, title, description);
+        // ContentItem의 변경된 create 메서드(인자 4개)에 맞춰 호출
+        item.create(category, title, description, targetRisk);
         return repo.saveContent(item);
     }
 
@@ -69,11 +71,7 @@ public class CommunityService {
         return repo.getAnnouncements();
     }
 
-    /**
-     * 게시글 삭제 비즈니스 로직
-     * - 작성자 본인은 삭제 가능
-     * - ADMIN 은 모든 글 삭제 가능
-     */
+    // 게시글 삭제 비즈니스 로직
     public boolean deletePost(Long postId, User requester) {
         CommunityPost post = repo.findPostById(postId);
         if (post == null) return false;

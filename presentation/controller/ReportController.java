@@ -10,12 +10,12 @@ public class ReportController {
 
     private final ReportService service = new ReportService();
 
-    // 1. 개인화 리포트 생성 (C_3)
+    // 1. 개인화 리포트 생성 (이름 수정됨)
     public PersonalReport createPersonalReport(Long patientId) {
         return service.createPersonalReport(patientId);
     }
 
-    // 2. 개인화 리포트 조회
+    // 2. 개인화 리포트 조회 (이름 수정됨)
     public List<PersonalReport> getPersonalReports(Long patientId) {
         return service.getPersonalReports(patientId);
     }
@@ -25,8 +25,8 @@ public class ReportController {
         return service.getGroup(patientId);
     }
 
-    // 4. [필수 추가] 또래 비교 데이터 생성 (PatientPanel에서 호출 중)
-    public GroupComparisonResult createGroup(Long patientId, String groupName, double myVal, double avgVal, String chartData) {
-        return service.createGroup(patientId, groupName, myVal, avgVal, chartData);
+    // 4. 또래 비교 생성 (필요 시)
+    public GroupComparisonResult createGroup(Long patientId, String groupKey, double metric, double avg, String chartData) {
+        return service.createGroup(patientId, groupKey, metric, avg, chartData);
     }
 }

@@ -1,22 +1,25 @@
 package domain.service;
 
 import data.repository.AssignmentRepository;
+import data.repository.ContentRepository;
 import data.repository.MedicalRepository;
 import data.repository.MessagingRepository;
+import domain.content.ContentItem;
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
 import domain.patient.*;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class PatientCareService {
 
-    private final MedicalRepository repo = new MedicalRepository();
+    // [필수] medicalRepo 필드 선언 추가됨
+    private final MedicalRepository medicalRepo = new MedicalRepository();
     private final AssignmentRepository assignRepo = new AssignmentRepository();
     private final MessagingRepository msgRepo = new MessagingRepository();
+    private final ContentRepository contentRepo = new ContentRepository();
 
     public HealthRecord createHealthRecord(Long patientId,
                                            int sys, int dia, double sugar,
@@ -29,9 +32,9 @@ public class PatientCareService {
         record.setPatientId(patientId);
         record.update(sys, dia, sugar, smoking, drinking,
                 activity, riskFactors, height, weight);
-        HealthRecord savedRecord = repo.saveNewRecord(record);
+        HealthRecord savedRecord = medicalRepo.saveNewRecord(record);
 
-        // 2. 위험도 분석 로직
+        // 2. 위험도 분석
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
 
@@ -56,23 +59,20 @@ public class PatientCareService {
         RiskAssessment risk = new RiskAssessment();
         risk.setPatientId(patientId);
         risk.assess(score, score, level, reason.toString());
-        repo.saveRisk(risk);
+        medicalRepo.saveRisk(risk);
 
-        // -----------------------------------------------------------------
-        // [핵심] 알림 발송 로직
-        // -----------------------------------------------------------------
+        // 4. 알림 발송 로직
         if ("고위험".equals(level)) {
             String msg = String.format("🚨 [위험 경고] 혈압:%d/%d, 혈당:%.0f (%s)", sys, dia, sugar, reason);
 
-            // (1) 환자 본인에게 알림
+            // 환자 알림
             Alert myAlert = new Alert();
             myAlert.create(patientId, msg);
             msgRepo.saveAlert(myAlert);
 
-            // (2) 연결된 보호자에게 알림
+            // 보호자 알림
             List<PatientAssignment> list = assignRepo.getAssignments(patientId);
             for (PatientAssignment a : list) {
-                // [중요] 상태가 ACCEPTED이고, 보호자 ID가 있을 때만 보냄
                 if ("ACCEPTED".equals(a.getStatus()) && a.getCaregiverId() != null) {
                     Alert familyAlert = new Alert();
                     familyAlert.create(a.getCaregiverId(), "🚨 [가족 위험] " + msg);
@@ -80,13 +80,12 @@ public class PatientCareService {
                 }
             }
         }
-
         return savedRecord;
     }
 
-    // --- 기존 조회 메서드 유지 ---
+    // [수정] repo -> medicalRepo 로 변수명 변경 완료
     public List<RiskAssessment> getRisk(Long patientId) {
-        List<HealthRecord> records = repo.findRecordsByPatient(patientId);
+        List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
         if (records.isEmpty()) return Collections.emptyList();
         List<RiskAssessment> result = new ArrayList<>();
         for (HealthRecord record : records) {
@@ -95,10 +94,8 @@ public class PatientCareService {
         return result;
     }
 
-    // ... 나머지 getCompRisk, calculate... 메서드들 그대로 유지 ...
-    // (보내주신 코드 그대로 두시면 됩니다)
     public List<ComplicationRisk> getCompRisk(Long patientId) {
-        List<HealthRecord> records = repo.findRecordsByPatient(patientId);
+        List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
         if (records.isEmpty()) return Collections.emptyList();
         List<ComplicationRisk> result = new ArrayList<>();
         for (HealthRecord record : records) {
@@ -107,11 +104,21 @@ public class PatientCareService {
         return result;
     }
 
+    // [수정] 안전하게 리스트 마지막 요소 가져오기
+    public List<ContentItem> getRecommendedContents(Long patientId) {
+        List<RiskAssessment> risks = medicalRepo.findRiskByPatient(patientId);
+        String currentLevel = "정상";
+        if (!risks.isEmpty()) {
+            currentLevel = risks.get(risks.size() - 1).getRiskLevel();
+        }
+        return contentRepo.findContentsByRisk(currentLevel);
+    }
+
+    // --- Helper Methods ---
     private RiskAssessment calculateRiskDynamic(HealthRecord r) {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
-        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
-                r.getDiastolicBp() >= RiskConfiguration.BP_DIASTOLIC_THRESHOLD) {
+        if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD || r.getDiastolicBp() >= RiskConfiguration.BP_DIASTOLIC_THRESHOLD) {
             score += 30.0; reason.append("고혈압/ ");
         }
         if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) {
@@ -145,13 +152,13 @@ public class PatientCareService {
         return comp;
     }
 
-    public List<HealthRecord> getRecords(Long patientId) { return repo.findRecordsByPatient(patientId); }
+    public List<HealthRecord> getRecords(Long pid) { return medicalRepo.findRecordsByPatient(pid); }
     public RiskAssessment createRisk(Long pid, double score, double percent, String level, String summary) {
-        RiskAssessment r = new RiskAssessment(); r.setPatientId(pid); r.assess(score, percent, level, summary); return repo.saveRisk(r);
+        RiskAssessment r = new RiskAssessment(); r.setPatientId(pid); r.assess(score, percent, level, summary); return medicalRepo.saveRisk(r);
     }
     public ComplicationRisk createCompRisk(Long pid, String type, double prob, String rec) {
-        ComplicationRisk r = new ComplicationRisk(); r.setPatientId(pid); r.update(type, prob, rec); return repo.saveCompRisk(r);
+        ComplicationRisk r = new ComplicationRisk(); r.setPatientId(pid); r.update(type, prob, rec); return medicalRepo.saveCompRisk(r);
     }
-    public List<DoctorNote> getMyNotes(Long patientId) { return repo.findNotesByPatient(patientId); }
-    public List<ScheduledExam> getMyExams(Long patientId) { return repo.findExamsByPatient(patientId); }
+    public List<DoctorNote> getMyNotes(Long pid) { return medicalRepo.findNotesByPatient(pid); }
+    public List<ScheduledExam> getMyExams(Long pid) { return medicalRepo.findExamsByPatient(pid); }
 }

@@ -40,7 +40,7 @@ public class CommunityController {
     }
 
     public ContentItem addContent(String category, String title, String desc) {
-        return service.createContent(category, title, desc);
+        return service.createContent(category, title, desc, "ALL");
     }
 
     public List<ContentItem> getContents() {
