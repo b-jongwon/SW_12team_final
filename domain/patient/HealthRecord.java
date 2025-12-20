@@ -78,4 +78,12 @@ public class HealthRecord {
     public void setBmi(double bmi) {
         this.bmi = bmi;
     }
+
+    public String getDrinking() {
+        return drinking;
+    }
+
+    public String getActivityLevel() {
+        return activityLevel;
+    }
 }

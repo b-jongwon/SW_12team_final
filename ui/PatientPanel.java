@@ -186,93 +186,188 @@ public class PatientPanel extends JPanel {
         return panel;
     }
 
-    // ---------------------------------------------------------
-    // 탭 3: 합병증 위험도 분석 패널 (수정완료: 에러 없음)
-    // ---------------------------------------------------------
     private JPanel createComplicationPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
 
-        DefaultListModel<RiskViewItem> listModel = new DefaultListModel<>();
-        JList<RiskViewItem> riskList = new JList<>(listModel);
+        // 상단: 새로고침 버튼
+        JButton refreshBtn = new JButton("최신 데이터로 분석 새로고침");
+        refreshBtn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        refreshBtn.setBackground(new Color(220, 255, 220));
+        mainPanel.add(refreshBtn, BorderLayout.NORTH);
 
-        riskList.setCellRenderer(new ComplicationRenderer());
-        riskList.setFixedCellHeight(100);
+        // 중앙: 상세 분석 내용을 담을 패널 (초기엔 비어있음)
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JButton checkBtn = new JButton("합병증 위험도 분석 새로고침");
-        checkBtn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
-        checkBtn.setBackground(new Color(220, 255, 220));
+        refreshBtn.addActionListener(e -> {
+            contentPanel.removeAll(); // 기존 내용 지우기
 
-        checkBtn.addActionListener(e -> {
-            listModel.clear();
-            List<ComplicationRisk> compRisks = patientController.getCompRisk(user.getId());
-
-            if (compRisks.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "분석된 데이터가 없습니다.\n먼저 건강 데이터를 입력해주세요.");
+            // 1. 최신 기록 가져오기
+            List<HealthRecord> records = patientController.getRecords(user.getId());
+            if (records.isEmpty()) {
+                JLabel emptyMsg = new JLabel("분석할 데이터가 없습니다. 먼저 건강 데이터를 입력해주세요.");
+                emptyMsg.setAlignmentX(Component.CENTER_ALIGNMENT);
+                contentPanel.add(Box.createVerticalStrut(50));
+                contentPanel.add(emptyMsg);
             } else {
-                int count = 1;
-                for (ComplicationRisk r : compRisks) {
-                    // [에러 해결] 복잡한 변환 없이 바로 가져옵니다.
-                    double score = r.getProbability();
+                HealthRecord last = records.get(records.size() - 1); // 최신 데이터
 
-                    String level = (score >= 70) ? "고위험" : (score >= 40) ? "주의" : "안전";
+                // 2. 합병증 위험도 계산 결과 가져오기 (리스트 중 마지막꺼)
+                List<ComplicationRisk> risks = patientController.getCompRisk(user.getId());
+                ComplicationRisk latestRisk = risks.isEmpty() ? null : risks.get(risks.size()-1);
 
-                    listModel.addElement(new RiskViewItem(
-                            count++,
-                            r.getComplicationType(),
-                            score,
-                            level,
-                            r.getRecommendation()
-                    ));
+                // --- UI 구성 시작 ---
+
+                // (A) 종합 결과 카드 (크게)
+                JPanel summaryPanel = new JPanel(new BorderLayout());
+                summaryPanel.setBorder(BorderFactory.createTitledBorder(" 종합 분석 결과"));
+                summaryPanel.setMaximumSize(new Dimension(800, 150));
+
+                JLabel resultLabel = new JLabel();
+                resultLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
+                resultLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+                if (latestRisk != null) {
+                    resultLabel.setText("<html><center>" + latestRisk.getRecommendation() + "</center></html>");
+                    // 점수에 따라 색상
+                    if (latestRisk.getProbability() >= 70) resultLabel.setForeground(Color.RED);
+                    else if (latestRisk.getProbability() >= 40) resultLabel.setForeground(Color.ORANGE);
+                    else resultLabel.setForeground(new Color(0, 150, 0));
                 }
+                summaryPanel.add(resultLabel, BorderLayout.CENTER);
+                contentPanel.add(summaryPanel);
+                contentPanel.add(Box.createVerticalStrut(10));
+
+                // (B) 항목별 상세 카드 (Grid Layout) - 혈압, 혈당, BMI, 습관
+                JPanel detailGrid = new JPanel(new GridLayout(2, 2, 10, 10));
+                detailGrid.setMaximumSize(new Dimension(800, 300));
+
+                // 1. 혈압 상태
+                detailGrid.add(createDetailCard(" 혈압 상태",
+                        last.getSystolicBp() + "/" + last.getDiastolicBp(),
+                        last.getSystolicBp() >= 140 ? "주의 필요 (고혈압)" : "정상 범위",
+                        last.getSystolicBp() >= 140));
+
+                // 2. 혈당 상태
+                detailGrid.add(createDetailCard(" 공복 혈당",
+                        last.getBloodSugar() + " mg/dL",
+                        last.getBloodSugar() >= 126 ? "관리 필요 (당뇨)" : "정상 범위",
+                        last.getBloodSugar() >= 126));
+
+                // 3. 비만도
+                detailGrid.add(createDetailCard(" 체질량(BMI)",
+                        String.format("%.1f", last.getBmi()),
+                        last.getBmi() >= 25 ? "체중 조절 권장" : "건강한 체중",
+                        last.getBmi() >= 25));
+
+                // 4. 생활 습관
+                boolean badHabit = "Yes".equalsIgnoreCase(last.getSmoking());
+                detailGrid.add(createDetailCard(" 생활 습관",
+                        "흡연: " + last.getSmoking(),
+                        badHabit ? "금연이 시급합니다" : "좋은 습관 유지 중",
+                        badHabit));
+
+                contentPanel.add(detailGrid);
             }
+
+            contentPanel.revalidate();
+            contentPanel.repaint();
         });
 
-        panel.add(checkBtn, BorderLayout.NORTH);
-        panel.add(new JScrollPane(riskList), BorderLayout.CENTER);
-        return panel;
+        // 초기 로드
+        refreshBtn.doClick();
+
+        return mainPanel;
+    }
+    // [Helper] 항목별 상세 카드를 예쁘게 만들어주는 메서드
+    private JPanel createDetailCard(String title, String value, String status, boolean isDanger) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1));
+        card.setBackground(Color.WHITE);
+
+        JLabel titleLbl = new JLabel(" " + title);
+        titleLbl.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        titleLbl.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        JLabel valueLbl = new JLabel(value);
+        valueLbl.setFont(new Font("Verdana", Font.BOLD, 20));
+        valueLbl.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JLabel statusLbl = new JLabel(status);
+        statusLbl.setFont(new Font("맑은 고딕", Font.PLAIN, 12));
+        statusLbl.setHorizontalAlignment(SwingConstants.CENTER);
+        statusLbl.setOpaque(true);
+        statusLbl.setBorder(new EmptyBorder(5,0,5,0));
+
+        if (isDanger) {
+            statusLbl.setBackground(new Color(255, 230, 230)); // 연한 빨강 배경
+            statusLbl.setForeground(Color.RED);
+        } else {
+            statusLbl.setBackground(new Color(230, 255, 230)); // 연한 초록 배경
+            statusLbl.setForeground(new Color(0, 100, 0));
+        }
+
+        card.add(titleLbl, BorderLayout.NORTH);
+        card.add(valueLbl, BorderLayout.CENTER);
+        card.add(statusLbl, BorderLayout.SOUTH);
+
+        return card;
     }
     // ---------------------------------------------------------
-    // 탭 4: 또래 평균 비교 패널 (막대 그래프 시각화 버전)
+    // ---------------------------------------------------------
+    // 탭 4: 또래 평균 비교 패널 (여러 기준 시뮬레이션 결과)
     // ---------------------------------------------------------
     private JPanel createComparePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+        JPanel mainPanel = new JPanel(new BorderLayout());
 
-        DefaultListModel<GroupComparisonResult> listModel = new DefaultListModel<>();
-        JList<GroupComparisonResult> list = new JList<>(listModel);
+        JButton refreshBtn = new JButton("비교 시뮬레이션 실행");
+        refreshBtn.setFont(new Font("맑은 고딕", Font.BOLD, 14));
+        mainPanel.add(refreshBtn, BorderLayout.NORTH);
 
-        // ★ 여기서 새로 만든 비교 전용 렌더러 장착!
-        list.setCellRenderer(new CompareRenderer());
-        list.setFixedCellHeight(120); // 막대 2개라 조금 더 높게
+        // 결과를 담을 스크롤 패널
+        JPanel listPanel = new JPanel();
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+        mainPanel.add(new JScrollPane(listPanel), BorderLayout.CENTER);
 
-        JButton loadBtn = new JButton("또래 비교 리포트 보기");
-        JButton createTestBtn = new JButton("비교 분석 요청(테스트)");
+        refreshBtn.addActionListener(e -> {
+            listPanel.removeAll();
 
-        loadBtn.addActionListener(e -> {
-            listModel.clear();
-            List<GroupComparisonResult> groups = reportController.getGroup(user.getId());
+            // 서비스에서 시뮬레이션 결과 3종 세트 가져오기
+            // (PatientCareService에 getSimulationResults 메서드가 있어야 함)
+            List<GroupComparisonResult> simulations = patientController.getSimulations(user.getId());
+            // Note: Controller에 getSimulations 메서드를 추가해서 Service의 getSimulationResults를 호출하게 연결해주세요.
 
-            if (groups.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "생성된 비교 리포트가 없습니다.");
+            if (simulations.isEmpty()) {
+                JLabel msg = new JLabel("비교할 데이터가 부족합니다.");
+                msg.setAlignmentX(Component.CENTER_ALIGNMENT);
+                listPanel.add(Box.createVerticalStrut(20));
+                listPanel.add(msg);
             } else {
-                for (GroupComparisonResult g : groups) {
-                    listModel.addElement(g); // 객체 그대로 추가 (렌더러가 알아서 그림)
+                for (GroupComparisonResult result : simulations) {
+                    // 기존에 만들어둔 Renderer 재사용 (JList용이지만 여기서 패널처럼 씀)
+                    CompareRenderer renderer = new CompareRenderer();
+                    // JList가 없으므로 dummy 값 전달
+                    Component comp = renderer.getListCellRendererComponent(null, result, 0, false, false);
+
+                    // 레이아웃 보정을 위해 패널에 감싸기
+                    JPanel wrapper = new JPanel(new BorderLayout());
+                    wrapper.add(comp, BorderLayout.CENTER);
+                    wrapper.setMaximumSize(new Dimension(1000, 120)); // 높이 고정
+
+                    listPanel.add(wrapper);
+                    listPanel.add(Box.createVerticalStrut(10)); // 간격
                 }
             }
+            listPanel.revalidate();
+            listPanel.repaint();
         });
 
-        createTestBtn.addActionListener(e -> {
-            reportController.createGroup(user.getId(), "40대 남성 평균", 135.0, 120.0, "GraphData");
-            JOptionPane.showMessageDialog(this, "비교 분석 완료. 리포트 보기를 눌러주세요.");
-            loadBtn.doClick(); // 자동 갱신
-        });
+        // 초기 실행
+        refreshBtn.doClick();
 
-        JPanel btnPanel = new JPanel();
-        btnPanel.add(loadBtn);
-        btnPanel.add(createTestBtn);
-
-        panel.add(btnPanel, BorderLayout.NORTH);
-        panel.add(new JScrollPane(list), BorderLayout.CENTER);
-        return panel;
+        return mainPanel;
     }
 
     // ---------------------------------------------------------
@@ -658,9 +753,11 @@ public class PatientPanel extends JPanel {
     // ==========================================
     class CompareRenderer extends JPanel implements ListCellRenderer<GroupComparisonResult> {
         private JLabel dateLabel = new JLabel();
-        private JProgressBar myBar = new JProgressBar(0, 200);   // 내 수치 (최대 200 가정)
-        private JProgressBar avgBar = new JProgressBar(0, 200);  // 평균 수치
         private JLabel groupLabel = new JLabel();
+
+        // 그래프 바 (최대값을 나중에 유동적으로 바꿀 예정)
+        private JProgressBar myBar = new JProgressBar(0, 100);
+        private JProgressBar avgBar = new JProgressBar(0, 100);
 
         public CompareRenderer() {
             setLayout(new BorderLayout(10, 10));
@@ -680,17 +777,14 @@ public class PatientPanel extends JPanel {
             topPanel.add(dateLabel, BorderLayout.EAST);
             add(topPanel, BorderLayout.NORTH);
 
-            // 2. 중앙: 막대 그래프 2개 (나 vs 평균)
+            // 2. 중앙: 막대 그래프 2개
             JPanel barPanel = new JPanel(new GridLayout(2, 1, 5, 5));
             barPanel.setOpaque(false);
 
-            // 내 막대 스타일
+            // 스타일 설정
             myBar.setStringPainted(true);
-            myBar.setForeground(new Color(100, 150, 255)); // 파란색
-
-            // 평균 막대 스타일
             avgBar.setStringPainted(true);
-            avgBar.setForeground(Color.LIGHT_GRAY); // 회색
+            avgBar.setForeground(Color.LIGHT_GRAY); // 평균은 항상 회색
 
             barPanel.add(myBar);
             barPanel.add(avgBar);
@@ -701,30 +795,45 @@ public class PatientPanel extends JPanel {
         public Component getListCellRendererComponent(JList<? extends GroupComparisonResult> list,
                                                       GroupComparisonResult value, int index,
                                                       boolean isSelected, boolean cellHasFocus) {
-            // 데이터 바인딩
+            // 1. 텍스트 바인딩
             groupLabel.setText("그룹: " + value.getGroupKey());
-
-            // 날짜 포맷 (null 처리 포함)
             if (value.getCreatedAt() != null) {
                 dateLabel.setText(value.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
             } else {
                 dateLabel.setText("-");
             }
 
-            // 그래프 값 설정
-            myBar.setValue((int) value.getPatientMetric());
-            myBar.setString("나의 수치: " + value.getPatientMetric());
+            // 2. [핵심] 항목별로 그래프 최대값(Max) 다르게 설정 (그래프가 꽉 차 보이게)
+            int maxScale = 100; // 기본(위험도 점수 등)
+            String unit = "점";
 
-            avgBar.setValue((int) value.getGroupAverage());
-            avgBar.setString("그룹 평균: " + value.getGroupAverage());
-
-            // 상위 퍼센트 강조 (옵션)
-            if (value.getPatientMetric() > value.getGroupAverage()) {
-                myBar.setForeground(new Color(255, 100, 100)); // 평균보다 높으면 빨강 경고
-            } else {
-                myBar.setForeground(new Color(100, 180, 255)); // 낮으면 파랑 안전
+            if (value.getGroupKey().contains("BMI")) {
+                maxScale = 50; // BMI는 50만 돼도 초고도비만이므로 스케일을 줄임
+                unit = "";
+            } else if (value.getGroupKey().contains("혈당")) {
+                maxScale = 200; // 혈당은 200까지
+                unit = "mg/dL";
             }
 
+            myBar.setMaximum(maxScale);
+            avgBar.setMaximum(maxScale);
+
+            // 3. 값 설정 및 소수점 깔끔하게 자르기 (String.format 사용)
+            myBar.setValue((int) value.getPatientMetric());
+            myBar.setString(String.format("나의 수치: %.1f %s", value.getPatientMetric(), unit));
+
+            avgBar.setValue((int) value.getGroupAverage());
+            avgBar.setString(String.format("그룹 평균: %.1f %s", value.getGroupAverage(), unit));
+
+            // 4. 색상 로직 (내가 평균보다 높으면 빨강, 낮으면 파랑)
+            // (일반적으로 수치가 낮을수록 건강하므로)
+            if (value.getPatientMetric() > value.getGroupAverage()) {
+                myBar.setForeground(new Color(255, 100, 100)); // 높음(주의) -> 빨강
+            } else {
+                myBar.setForeground(new Color(100, 180, 255)); // 낮음(양호) -> 파랑
+            }
+
+            // 배경색 처리
             if (isSelected) setBackground(new Color(240, 245, 255));
             else setBackground(Color.WHITE);
 

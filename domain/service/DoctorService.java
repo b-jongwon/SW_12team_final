@@ -7,6 +7,8 @@ import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
 import domain.patient.PatientAssignment;
 import domain.patient.RiskAssessment;
+import data.repository.UserRepository;
+import domain.user.Patient;
 import domain.user.User;
 
 import java.time.LocalDateTime;
@@ -14,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class DoctorService {
 
@@ -33,6 +36,18 @@ public class DoctorService {
                 .collect(Collectors.toList());
 
         return convertToSummaries(accepted);
+    }
+
+    public Patient getPatientById(Long patientId) {
+        UserRepository userRepository = new UserRepository(); // 지금 구조가 new 방식이라면 이게 제일 단순
+        Optional<User> found = userRepository.findById(patientId);
+
+        if (found.isEmpty()) return null;
+
+        User u = found.get();
+        if (u instanceof Patient) return (Patient) u;
+
+        return null; // Patient가 아닌 User면 null
     }
 
     // 연결 요청 대기 목록 조회 (PENDING 상태만)

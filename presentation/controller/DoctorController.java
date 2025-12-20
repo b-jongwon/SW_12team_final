@@ -4,6 +4,8 @@ import domain.patient.HealthRecord;
 import domain.service.DoctorService;
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
+import domain.user.Patient;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -42,4 +44,7 @@ public class DoctorController {
     public List<DoctorNote> getPatientNotes(Long patientId) {
         return service.getPatientDoctorNotes(patientId);
     }
+
+
+
 }

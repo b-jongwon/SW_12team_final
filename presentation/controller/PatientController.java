@@ -1,6 +1,7 @@
 package presentation.controller;
 
 import domain.content.ContentItem;
+import domain.patient.GroupComparisonResult;
 import domain.service.PatientCareService;
 import domain.patient.HealthRecord;
 import domain.patient.RiskAssessment;
@@ -55,5 +56,9 @@ public class PatientController {
     }
     public ComplicationRisk addCompRisk(Long pid, String type, double prob, String rec) {
         return service.createCompRisk(pid, type, prob, rec);
+    }
+    public List<GroupComparisonResult> getSimulations(Long patientId) {
+        // service는 PatientCareService 객체
+        return service.getSimulationResults(patientId);
     }
 }

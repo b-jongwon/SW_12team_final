@@ -3,6 +3,8 @@ package presentation.controller;
 import domain.service.CaregiverService;
 import domain.patient.HealthRecord;
 import domain.medical.DoctorNote;
+import domain.user.Patient;
+
 import java.util.List;
 
 public class CaregiverController {
@@ -31,4 +33,6 @@ public class CaregiverController {
     public List<DoctorNote> getPatientNotes(Long patientId) {
         return service.getPatientDoctorNotes(patientId);
     }
+
+
 }

@@ -11,23 +11,47 @@ public class RiskInfoDialog extends JDialog {
 
     public RiskInfoDialog(Window owner, HealthRecord myLastRecord) {
         super(owner, "위험도 분석 상세 기준 정보", ModalityType.APPLICATION_MODAL);
-        setSize(480, 420); // 창 크기 설정
+        setSize(500, 480); // 내용이 늘어날 수 있어 크기 약간 조정
         setLocationRelativeTo(owner); // 부모 창 중앙에 띄움
         setLayout(new BorderLayout());
 
-        // 1. 현재 설정된 기준값 가져오기
-        double sysLimit = RiskConfiguration.BP_SYSTOLIC_THRESHOLD;
-        double diaLimit = RiskConfiguration.BP_DIASTOLIC_THRESHOLD;
-        double sugarLimit = RiskConfiguration.SUGAR_THRESHOLD;
-        double bmiLimit = RiskConfiguration.BMI_THRESHOLD;
+        // ---------------------------------------------------------------
+        // 1. 환자 정보 추출 및 맞춤형 기준값 가져오기 (동적 로직 적용)
+        // ---------------------------------------------------------------
+        int age = 0;
+        String gender = "Unknown";
 
+        if (myLastRecord != null) {
+            age = myLastRecord.getAge();
+            gender = myLastRecord.getGender();
+        }
+
+        // ★ [핵심] 나이와 성별을 넣어 '이 사람에게 맞는 기준'을 받아옵니다.
+        // (RiskConfiguration에 getPersonalizedCriteria 메서드가 있어야 함)
+        RiskConfiguration.PersonalCriteria criteria =
+                RiskConfiguration.getPersonalizedCriteria(age, gender);
+
+        double sysLimit = criteria.maxSys;
+        double diaLimit = criteria.maxDia;
+        double sugarLimit = criteria.maxSugar;
+        double bmiLimit = criteria.maxBmi;
+
+        // ---------------------------------------------------------------
         // 2. 출력할 텍스트 구성
+        // ---------------------------------------------------------------
         StringBuilder sb = new StringBuilder();
-        sb.append("=== 🛑 뇌졸중 위험 판단 기준 (Risk Criteria) ===\n\n");
+
+        sb.append("=== 🛑 뇌졸중 위험 판단 기준 (개인 맞춤형) ===\n");
+        if (myLastRecord != null) {
+            sb.append(String.format("※ 적용 대상: %d세 / %s 기준 보정값\n\n", age, gender));
+        } else {
+            sb.append("※ 적용 대상: 기본 설정값 (데이터 없음)\n\n");
+        }
+
         sb.append(String.format(" • 수축기 혈압 : %.0f mmHg 이상 (위험)\n", sysLimit));
         sb.append(String.format(" • 이완기 혈압 : %.0f mmHg 이상 (위험)\n", diaLimit));
         sb.append(String.format(" • 공복 혈당   : %.0f mg/dL 이상 (당뇨 위험)\n", sugarLimit));
-        sb.append(String.format(" • 비만도(BMI) : %.0f 이상 (비만)\n", bmiLimit));
+        sb.append(String.format(" • 비만도(BMI) : %.1f 이상 (비만)\n", bmiLimit));
 
         sb.append("\n============================================\n\n");
         sb.append("=== 👤 환자 데이터 분석 (Patient Data) ===\n\n");

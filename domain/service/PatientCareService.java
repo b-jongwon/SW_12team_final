@@ -8,7 +8,8 @@ import domain.content.ContentItem;
 import domain.medical.DoctorNote;
 import domain.medical.ScheduledExam;
 import domain.patient.*;
-import domain.patient.RiskConfiguration;
+import domain.user.Patient;
+import data.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,7 +22,7 @@ public class PatientCareService {
     private final AssignmentRepository assignRepo = new AssignmentRepository();
     private final MessagingRepository msgRepo = new MessagingRepository();
     private final ContentRepository contentRepo = new ContentRepository();
-
+    private final UserRepository userRepository = new UserRepository();
     // --------------------------------------------------------------------------
     // [1] 건강 데이터 생성 및 실시간 1차 위험 분석 (신호등 시스템)
     // --------------------------------------------------------------------------
@@ -35,11 +36,12 @@ public class PatientCareService {
         HealthRecord record = new HealthRecord();
         record.setPatientId(patientId);
 
-        // 업데이트 메서드 호출 (순서 주의)
+        // [수정됨] BMI는 HealthRecord 내부의 update() 메서드에서 자동 계산되도록 함
+        // (여기서 이중으로 계산하거나 setBmi를 호출하지 않음)
+
+        // 업데이트 메서드 호출
         record.update(age, gender, sys, dia, sugar, smoking, drinking,
                 activity, riskFactors, height, weight);
-
-
 
         HealthRecord savedRecord = medicalRepo.saveNewRecord(record);
 
@@ -111,7 +113,7 @@ public class PatientCareService {
     }
 
     // --------------------------------------------------------------------------
-    // [3] 합병증(심혈관) 위험도 조회 (핵심: 동적 계산 적용)
+    // [3] 합병증(심혈관) 위험도 조회 (개별 경고 기능 강화 버전)
     // --------------------------------------------------------------------------
     public List<ComplicationRisk> getCompRisk(Long patientId) {
         List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
@@ -145,17 +147,21 @@ public class PatientCareService {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
 
-        if (r.getSystolicBp() >= 140 || r.getDiastolicBp() >= 90) {
+        // 개인 맞춤형 기준 가져오기
+        RiskConfiguration.PersonalCriteria criteria =
+                RiskConfiguration.getPersonalizedCriteria(r.getAge(), r.getGender());
+
+        if (r.getSystolicBp() >= criteria.maxSys || r.getDiastolicBp() >= criteria.maxDia) {
             score += 40.0; reason.append("고혈압/ ");
-        } else if (r.getSystolicBp() >= 120) {
+        } else if (r.getSystolicBp() >= (criteria.maxSys - 20)) {
             score += 15.0; reason.append("혈압주의/ ");
         }
 
-        if (r.getBloodSugar() >= 126) {
+        if (r.getBloodSugar() >= criteria.maxSugar) {
             score += 30.0; reason.append("당뇨/ ");
         }
 
-        if (r.getBmi() >= 25.0) { // BMI 25 이상 비만
+        if (r.getBmi() >= criteria.maxBmi) {
             score += 15.0; reason.append("비만/ ");
         }
 
@@ -176,43 +182,86 @@ public class PatientCareService {
         return risk;
     }
 
-    // B. 합병증(심혈관) 위험도 계산
+    // B. 합병증(심혈관) 위험도 계산 (수정됨: 개별 항목 경고 기능 강화)
     private ComplicationRisk calculateComplicationDynamic(HealthRecord r) {
         double riskScore = 0.0;
-        List<String> factors = new ArrayList<>();
+        List<String> warnings = new ArrayList<>();
 
-        double highBpLimit = RiskConfiguration.BP_SYSTOLIC_THRESHOLD + 20; // 160
+        // 개인 맞춤형 기준 사용
+        RiskConfiguration.PersonalCriteria criteria =
+                RiskConfiguration.getPersonalizedCriteria(r.getAge(), r.getGender());
 
-        if (r.getSystolicBp() >= highBpLimit) riskScore += 30;
-        else if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 15;
+        // 1. 혈압 체크 (기준치보다 20 높으면 위험, 그냥 높으면 주의)
+        double highBpLimit = criteria.maxSys + 20;
 
-        if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 20;
-
-        if ("Yes".equalsIgnoreCase(r.getSmoking())) {
-            riskScore += 20; factors.add("흡연");
+        if (r.getSystolicBp() >= highBpLimit) {
+            riskScore += 30;
+            warnings.add("혈압 위험(즉시 관리)");
+        } else if (r.getSystolicBp() >= criteria.maxSys) {
+            riskScore += 15;
+            warnings.add("혈압 주의");
         }
 
+        // 2. 혈당 체크
+        if (r.getBloodSugar() >= criteria.maxSugar) {
+            riskScore += 20;
+            warnings.add("혈당 관리");
+        }
+
+        // 3. 흡연 체크
+        if ("Yes".equalsIgnoreCase(r.getSmoking())) {
+            riskScore += 20;
+            warnings.add("금연 권장");
+        }
+
+        // 4. 비만도(BMI) 체크
         if (r.getBmi() >= 30) {
-            riskScore += 10; factors.add("고도비만");
+            riskScore += 10;
+            warnings.add("체중 감량(고도비만)");
+        } else if (r.getBmi() >= criteria.maxBmi) {
+            warnings.add("체중 조절(비만)");
         }
 
         if (riskScore > 100) riskScore = 100;
 
         String recommendation;
-        if (riskScore >= 70) recommendation = "즉시 전문의 상담 필요 (" + String.join(", ", factors) + ")";
-        else if (riskScore >= 40) recommendation = "생활 습관 개선 시급 (" + String.join(", ", factors) + ")";
-        else recommendation = "현재 상태 양호 (지속 관리 권장)";
+        String warningText = String.join(", ", warnings);
+
+        if (riskScore >= 70) {
+            recommendation = "🚨 [고위험] 즉시 전문의 상담 필요 (" + warningText + ")";
+        }
+        else if (riskScore >= 40) {
+            recommendation = "⚠️ [주의] 생활 습관 개선 시급 (" + warningText + ")";
+        }
+        else {
+            if (!warnings.isEmpty()) {
+                recommendation = "✅ [관심] 전체적인 상태는 양호하나, [" + warningText + "] 에 유의하세요.";
+            } else {
+                recommendation = "🎉 [정상] 현재 매우 건강한 상태입니다. (지속 관리 권장)";
+            }
+        }
 
         ComplicationRisk comp = new ComplicationRisk();
         comp.setPatientId(r.getPatientId());
-        comp.update("심혈관/뇌졸중 예측", riskScore, recommendation);
+        comp.update("심혈관 건강 및 생활습관", riskScore, recommendation);
         return comp;
     }
 
-    // 단순 조회 및 저장 메서드들
-    public List<HealthRecord> getRecords(Long pid) { return medicalRepo.findRecordsByPatient(pid); }
-    public List<DoctorNote> getMyNotes(Long pid) { return medicalRepo.findNotesByPatient(pid); }
-    public List<ScheduledExam> getMyExams(Long pid) { return medicalRepo.findExamsByPatient(pid); }
+    // ==========================================================================
+    // [중요] PatientController가 사용하는 단순 조회/생성 메서드들 (오류 해결!)
+    // ==========================================================================
+
+    public List<HealthRecord> getRecords(Long pid) {
+        return medicalRepo.findRecordsByPatient(pid);
+    }
+
+    public List<DoctorNote> getMyNotes(Long pid) {
+        return medicalRepo.findNotesByPatient(pid);
+    }
+
+    public List<ScheduledExam> getMyExams(Long pid) {
+        return medicalRepo.findExamsByPatient(pid);
+    }
 
     public RiskAssessment createRisk(Long pid, double score, double percent, String level, String summary) {
         RiskAssessment r = new RiskAssessment();
@@ -226,5 +275,43 @@ public class PatientCareService {
         r.setPatientId(pid);
         r.update(type, prob, rec);
         return medicalRepo.saveCompRisk(r);
+    }
+    public List<GroupComparisonResult> getSimulationResults(Long patientId) {
+        List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
+        if (records.isEmpty()) return Collections.emptyList();
+
+        HealthRecord last = records.get(records.size() - 1); // 최신 기록
+        List<GroupComparisonResult> simulations = new ArrayList<>();
+
+        // 1. [나이대 비교] 내 점수 vs 같은 나이대 평균 점수
+        // (점수가 낮을수록 건강함)
+        double myRiskScore = calculateRiskDynamic(last).getRiskScore();
+        double ageAvgScore = 35.0; // 시뮬레이션 값 (30~40대 평균)
+        if (last.getAge() >= 60) ageAvgScore = 55.0; // 고령층 평균은 좀 더 높음
+
+        GroupComparisonResult sim1 = new GroupComparisonResult();
+        sim1.setGroupKey(last.getAge() / 10 * 10 + "대 평균 위험도 비교"); // 예: 20대 평균
+        sim1.setPatientMetric(myRiskScore);
+        sim1.setGroupAverage(ageAvgScore);
+        sim1.setCreatedAt(java.time.LocalDateTime.now());
+        simulations.add(sim1);
+
+        // 2. [BMI 비교] 내 BMI vs 이상적인 건강 그룹 BMI
+        GroupComparisonResult sim2 = new GroupComparisonResult();
+        sim2.setGroupKey("상위 10% 건강 그룹(BMI) 비교");
+        sim2.setPatientMetric(last.getBmi());
+        sim2.setGroupAverage(21.5); // 이상적인 BMI
+        sim2.setCreatedAt(java.time.LocalDateTime.now());
+        simulations.add(sim2);
+
+        // 3. [혈당 비교] 내 혈당 vs 동년배 평균 혈당
+        GroupComparisonResult sim3 = new GroupComparisonResult();
+        sim3.setGroupKey("동년배 평균 혈당 비교");
+        sim3.setPatientMetric(last.getBloodSugar());
+        sim3.setGroupAverage(95.0); // 평균 공복혈당
+        sim3.setCreatedAt(java.time.LocalDateTime.now());
+        simulations.add(sim3);
+
+        return simulations;
     }
 }
