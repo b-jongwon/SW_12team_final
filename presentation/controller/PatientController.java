@@ -14,8 +14,11 @@ public class PatientController {
 
     private final PatientCareService service = new PatientCareService();
 
-    public HealthRecord addRecord(Long pid, int sys, int dia, double sugar, String smoking, String drinking, String activity, String riskFactors, double height, double weight) {
-        return service.createHealthRecord(pid, sys, dia, sugar, smoking, drinking, activity, riskFactors, height, weight);
+    public HealthRecord addRecord(Long pid, int age, String gender, int sys, int dia, double sugar,
+                                  String smoking, String drinking, String activity,
+                                  String riskFactors, double height, double weight) {
+        // 서비스 호출 시 age, gender 전달
+        return service.createHealthRecord(pid, age, gender, sys, dia, sugar, smoking, drinking, activity, riskFactors, height, weight);
     }
 
     // [필수 추가] UI에서 호출함

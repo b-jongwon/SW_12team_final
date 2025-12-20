@@ -12,8 +12,12 @@ public class User {
     private String phone;
     private String email;
 
+    // [추가] 나이 계산을 위한 생년 필드
+    private int birthYear;
+
     public User() {}
 
+    // 기존 생성자 유지 (기존 코드 호환성 위해)
     public User(Long id, String loginId, String password, String name,
                 String role, String phone, String email) {
         this.id = id;
@@ -56,13 +60,21 @@ public class User {
 
     public String getRole() { return role; }
 
-    // [변경 2] 🚨 setRole() 메서드 삭제!
+    // [변경 2] 🚨 setRole() 메서드 삭제됨!
     // 이제 역할은 생성될 때(new Doctor 등) 결정되며, 중간에 바꿀 수 없습니다.
-    // public void setRole(String role) { this.role = role; } (삭제됨)
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
+
+    // [추가] 아까 ReportService 오류 해결을 위한 메서드
+    public int getBirthYear() {
+        return birthYear;
+    }
+
+    public void setBirthYear(int birthYear) {
+        this.birthYear = birthYear;
+    }
 }

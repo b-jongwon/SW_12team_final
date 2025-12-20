@@ -16,10 +16,10 @@ public class Main {
         AuthController auth = new AuthController();
         PatientController patient = new PatientController();
         AssignmentController assignment = new AssignmentController();
-        AdminController adminCtrl = new AdminController(); // 공지사항용
+        AdminController adminCtrl = new AdminController();
 
         // -------------------------
-        // 1. 핵심 사용자 등록 (비번 1234)
+        // 1. 핵심 사용자 등록
         // -------------------------
         User p1 = auth.register("환자1", "1234", "김철수(환자1)", "PATIENT");
         User p2 = auth.register("환자2", "1234", "이영희(환자2)", "PATIENT");
@@ -32,40 +32,46 @@ public class Main {
         System.out.println("✅ 핵심 사용자 등록 완료");
 
         // -------------------------
-        // 2. 관계 배정 (Assignment)
+        // 2. 관계 배정
         // -------------------------
-        // 의사1 -> 환자1, 환자2 담당
-        // 보호자1 -> 환자1, 환자2 담당
         try {
-            // 환자1에게 의사1, 보호자1 배정
-            // (컨트롤러 로직에 따라 request -> accept 과정이 필요할 수 있으나,
-            //  초기화 단계에서는 assign 메서드가 강제 연결(ACCEPTED)한다고 가정)
-            assignment.assign(p1.getId(), d1.getId(), null); // 의사 배정
-            assignment.assign(p1.getId(), null, c1.getId()); // 보호자 배정
-
-            // 환자2에게 의사1, 보호자1 배정
+            assignment.assign(p1.getId(), d1.getId(), null);
+            assignment.assign(p1.getId(), null, c1.getId());
             assignment.assign(p2.getId(), d1.getId(), null);
             assignment.assign(p2.getId(), null, c1.getId());
-
             System.out.println("✅ 의사/보호자 <-> 환자 연결 완료");
         } catch (Exception e) {
-            System.out.println("⚠️ 배정 중 오류(이미 배정됨 등): " + e.getMessage());
+            System.out.println("⚠️ 배정 중 오류: " + e.getMessage());
         }
 
         // -------------------------
-        // 3. 비교군 데이터 생성 (50명)
+        // 3. 비교군 데이터 생성 (50명) - 나이/성별 포함
         // -------------------------
         System.out.println("📊 또래 비교용 가상 데이터 50건 생성 중...");
         generateDummyData(auth, patient, 50);
         System.out.println("✅ 가상 데이터 생성 완료");
 
         // -------------------------
-        // 4. 환자1, 환자2 초기 건강 기록 입력 (그래프 표시용)
+        // 4. 환자1, 환자2 초기 건강 기록 입력 (수정됨: 나이, 성별 추가)
         // -------------------------
-        // 환자1: 고위험군 (데이터 시연용)
-        patient.addRecord(p1.getId(), 150, 95, 180.0, "Yes", "Frequent", "Low", "가족력 있음", 1.75, 85.0);
-        // 환자2: 정상군 (대조용)
-        patient.addRecord(p2.getId(), 115, 75, 90.0, "No", "None", "High", "없음", 1.65, 55.0);
+
+        // [환자1] 52세 남성, 고위험군
+        patient.addRecord(
+                p1.getId(),
+                52, "Male",        // [추가된 부분] 나이, 성별
+                150, 95, 180.0,    // 혈압, 혈당
+                "Yes", "Frequent", "Low",
+                "가족력 있음", 1.75, 85.0
+        );
+
+        // [환자2] 28세 여성, 정상군
+        patient.addRecord(
+                p2.getId(),
+                28, "Female",      // [추가된 부분] 나이, 성별
+                115, 75, 90.0,
+                "No", "None", "High",
+                "없음", 1.65, 55.0
+        );
 
         System.out.println("✅ 환자1(고위험), 환자2(정상) 초기 기록 입력 완료");
 
@@ -78,7 +84,7 @@ public class Main {
         System.out.println("===== [System] 모든 데이터 준비가 완료되었습니다. =====");
     }
 
-    // [가상 데이터 생성기]
+    // [가상 데이터 생성기] - 나이와 성별 랜덤 생성 추가
     private static void generateDummyData(AuthController auth, PatientController patientCtrl, int count) {
         Random random = new Random();
 
@@ -87,31 +93,36 @@ public class Main {
             String name = "Dummy" + i;
             User dummyUser = auth.register("dummy" + i, "1234", name, "PATIENT");
 
-            // 2. 랜덤 수치 생성 (현실적인 분포 적용)
+            // 2. 랜덤 데이터 생성
+
+            // [NEW] 나이 (20세 ~ 79세)
+            int age = 20 + random.nextInt(60);
+
+            // [NEW] 성별
+            String gender = random.nextBoolean() ? "Male" : "Female";
+
+            // 혈압/혈당 (30% 확률로 고위험군)
             int sys, dia;
             double sugar;
-
-            // 30% 확률로 고위험군 데이터 생성 (비교 데이터를 다채롭게 하기 위함)
             if (random.nextInt(10) < 3) {
-                sys = 140 + random.nextInt(40); // 140 ~ 180
-                dia = 90 + random.nextInt(30);  // 90 ~ 120
-                sugar = 130 + random.nextInt(100); // 130 ~ 230
+                sys = 140 + random.nextInt(40);
+                dia = 90 + random.nextInt(30);
+                sugar = 130 + random.nextInt(100);
             } else {
-                sys = 100 + random.nextInt(39); // 100 ~ 139 (정상~주의)
-                dia = 60 + random.nextInt(29);  // 60 ~ 89
-                sugar = 70 + random.nextInt(59); // 70 ~ 129
+                sys = 100 + random.nextInt(39);
+                dia = 60 + random.nextInt(29);
+                sugar = 70 + random.nextInt(59);
             }
 
-            // BMI용 키/몸무게
-            double height = 1.6 + (random.nextDouble() * 0.3); // 1.6m ~ 1.9m
-            double weight = 50 + random.nextInt(60);           // 50kg ~ 110kg
-
+            double height = 1.6 + (random.nextDouble() * 0.3);
+            double weight = 50 + random.nextInt(60);
             String smoking = random.nextBoolean() ? "Yes" : "No";
             String drinking = random.nextBoolean() ? "Frequent" : "None";
 
-            // 3. 기록 저장
+            // 3. 기록 저장 (변경된 파라미터 적용)
             patientCtrl.addRecord(
                     dummyUser.getId(),
+                    age, gender,  // [추가됨]
                     sys, dia, sugar,
                     smoking, drinking, "Medium",
                     "Dummy Data",
@@ -123,10 +134,9 @@ public class Main {
     public static void clearAllData() {
         File dataDir = new File("data");
         if (!dataDir.exists()) {
-            dataDir.mkdir(); // 폴더가 없으면 생성
+            dataDir.mkdir();
             return;
         }
-
         File[] files = dataDir.listFiles();
         if (files != null) {
             for (File file : files) {
