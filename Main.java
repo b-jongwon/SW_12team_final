@@ -25,7 +25,10 @@ public class Main {
         User p2 = auth.register("환자2", "1234", "이영희(환자2)", "PATIENT");
 
         User d1 = auth.register("의사1", "1234", "김닥터(의사1)", "DOCTOR");
+        User d2 = auth.register("의사2", "1234", "이닥투(의사2)", "DOCTOR");
+
         User c1 = auth.register("보호자1", "1234", "박가족(보호자1)", "CAREGIVER");
+        User c2  = auth.register("보호자2", "1234", "이가족(보호자2)", "CAREGIVER");
 
         User admin = auth.register("관리자", "1234", "시스템관리자", "ADMIN");
 
@@ -59,7 +62,7 @@ public class Main {
                 52, "Male",        // [추가된 부분] 나이, 성별
                 150, 95, 180.0,    // 혈압, 혈당
                 "Yes", "Frequent", "Low",
-                "가족력 있음", 1.75, 85.0
+                "가족력 있음", 175, 85.0
         );
 
 

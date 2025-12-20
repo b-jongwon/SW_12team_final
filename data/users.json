@@ -32,7 +32,19 @@
     "birthYear": 0
   },
   {
+    "licenseNo": "N/A",
+    "hospitalName": "N/A",
     "id": 4,
+    "loginId": "의사2",
+    "password": "1234",
+    "name": "이닥투(의사2)",
+    "role": "DOCTOR",
+    "phone": "",
+    "email": "",
+    "birthYear": 0
+  },
+  {
+    "id": 5,
     "loginId": "보호자1",
     "password": "1234",
     "name": "박가족(보호자1)",
@@ -42,7 +54,17 @@
     "birthYear": 0
   },
   {
-    "id": 5,
+    "id": 6,
+    "loginId": "보호자2",
+    "password": "1234",
+    "name": "이가족(보호자2)",
+    "role": "CAREGIVER",
+    "phone": "",
+    "email": "",
+    "birthYear": 0
+  },
+  {
+    "id": 7,
     "loginId": "관리자",
     "password": "1234",
     "name": "시스템관리자",
@@ -52,7 +74,7 @@
     "birthYear": 0
   },
   {
-    "id": 6,
+    "id": 8,
     "loginId": "dummy1",
     "password": "1234",
     "name": "Dummy1",
@@ -62,7 +84,7 @@
     "birthYear": 0
   },
   {
-    "id": 7,
+    "id": 9,
     "loginId": "dummy2",
     "password": "1234",
     "name": "Dummy2",
@@ -72,7 +94,7 @@
     "birthYear": 0
   },
   {
-    "id": 8,
+    "id": 10,
     "loginId": "dummy3",
     "password": "1234",
     "name": "Dummy3",
@@ -82,7 +104,7 @@
     "birthYear": 0
   },
   {
-    "id": 9,
+    "id": 11,
     "loginId": "dummy4",
     "password": "1234",
     "name": "Dummy4",
@@ -92,7 +114,7 @@
     "birthYear": 0
   },
   {
-    "id": 10,
+    "id": 12,
     "loginId": "dummy5",
     "password": "1234",
     "name": "Dummy5",
@@ -102,7 +124,7 @@
     "birthYear": 0
   },
   {
-    "id": 11,
+    "id": 13,
     "loginId": "dummy6",
     "password": "1234",
     "name": "Dummy6",
@@ -112,7 +134,7 @@
     "birthYear": 0
   },
   {
-    "id": 12,
+    "id": 14,
     "loginId": "dummy7",
     "password": "1234",
     "name": "Dummy7",
@@ -122,7 +144,7 @@
     "birthYear": 0
   },
   {
-    "id": 13,
+    "id": 15,
     "loginId": "dummy8",
     "password": "1234",
     "name": "Dummy8",
@@ -132,7 +154,7 @@
     "birthYear": 0
   },
   {
-    "id": 14,
+    "id": 16,
     "loginId": "dummy9",
     "password": "1234",
     "name": "Dummy9",
@@ -142,7 +164,7 @@
     "birthYear": 0
   },
   {
-    "id": 15,
+    "id": 17,
     "loginId": "dummy10",
     "password": "1234",
     "name": "Dummy10",
@@ -152,7 +174,7 @@
     "birthYear": 0
   },
   {
-    "id": 16,
+    "id": 18,
     "loginId": "dummy11",
     "password": "1234",
     "name": "Dummy11",
@@ -162,7 +184,7 @@
     "birthYear": 0
   },
   {
-    "id": 17,
+    "id": 19,
     "loginId": "dummy12",
     "password": "1234",
     "name": "Dummy12",
@@ -172,7 +194,7 @@
     "birthYear": 0
   },
   {
-    "id": 18,
+    "id": 20,
     "loginId": "dummy13",
     "password": "1234",
     "name": "Dummy13",
@@ -182,7 +204,7 @@
     "birthYear": 0
   },
   {
-    "id": 19,
+    "id": 21,
     "loginId": "dummy14",
     "password": "1234",
     "name": "Dummy14",
@@ -192,7 +214,7 @@
     "birthYear": 0
   },
   {
-    "id": 20,
+    "id": 22,
     "loginId": "dummy15",
     "password": "1234",
     "name": "Dummy15",
@@ -202,7 +224,7 @@
     "birthYear": 0
   },
   {
-    "id": 21,
+    "id": 23,
     "loginId": "dummy16",
     "password": "1234",
     "name": "Dummy16",
@@ -212,7 +234,7 @@
     "birthYear": 0
   },
   {
-    "id": 22,
+    "id": 24,
     "loginId": "dummy17",
     "password": "1234",
     "name": "Dummy17",
@@ -222,7 +244,7 @@
     "birthYear": 0
   },
   {
-    "id": 23,
+    "id": 25,
     "loginId": "dummy18",
     "password": "1234",
     "name": "Dummy18",
@@ -232,7 +254,7 @@
     "birthYear": 0
   },
   {
-    "id": 24,
+    "id": 26,
     "loginId": "dummy19",
     "password": "1234",
     "name": "Dummy19",
@@ -242,7 +264,7 @@
     "birthYear": 0
   },
   {
-    "id": 25,
+    "id": 27,
     "loginId": "dummy20",
     "password": "1234",
     "name": "Dummy20",
@@ -252,7 +274,7 @@
     "birthYear": 0
   },
   {
-    "id": 26,
+    "id": 28,
     "loginId": "dummy21",
     "password": "1234",
     "name": "Dummy21",
@@ -262,7 +284,7 @@
     "birthYear": 0
   },
   {
-    "id": 27,
+    "id": 29,
     "loginId": "dummy22",
     "password": "1234",
     "name": "Dummy22",
@@ -272,7 +294,7 @@
     "birthYear": 0
   },
   {
-    "id": 28,
+    "id": 30,
     "loginId": "dummy23",
     "password": "1234",
     "name": "Dummy23",
@@ -282,7 +304,7 @@
     "birthYear": 0
   },
   {
-    "id": 29,
+    "id": 31,
     "loginId": "dummy24",
     "password": "1234",
     "name": "Dummy24",
@@ -292,7 +314,7 @@
     "birthYear": 0
   },
   {
-    "id": 30,
+    "id": 32,
     "loginId": "dummy25",
     "password": "1234",
     "name": "Dummy25",
@@ -302,7 +324,7 @@
     "birthYear": 0
   },
   {
-    "id": 31,
+    "id": 33,
     "loginId": "dummy26",
     "password": "1234",
     "name": "Dummy26",
@@ -312,7 +334,7 @@
     "birthYear": 0
   },
   {
-    "id": 32,
+    "id": 34,
     "loginId": "dummy27",
     "password": "1234",
     "name": "Dummy27",
@@ -322,7 +344,7 @@
     "birthYear": 0
   },
   {
-    "id": 33,
+    "id": 35,
     "loginId": "dummy28",
     "password": "1234",
     "name": "Dummy28",
@@ -332,7 +354,7 @@
     "birthYear": 0
   },
   {
-    "id": 34,
+    "id": 36,
     "loginId": "dummy29",
     "password": "1234",
     "name": "Dummy29",
@@ -342,7 +364,7 @@
     "birthYear": 0
   },
   {
-    "id": 35,
+    "id": 37,
     "loginId": "dummy30",
     "password": "1234",
     "name": "Dummy30",
@@ -352,7 +374,7 @@
     "birthYear": 0
   },
   {
-    "id": 36,
+    "id": 38,
     "loginId": "dummy31",
     "password": "1234",
     "name": "Dummy31",
@@ -362,7 +384,7 @@
     "birthYear": 0
   },
   {
-    "id": 37,
+    "id": 39,
     "loginId": "dummy32",
     "password": "1234",
     "name": "Dummy32",
@@ -372,7 +394,7 @@
     "birthYear": 0
   },
   {
-    "id": 38,
+    "id": 40,
     "loginId": "dummy33",
     "password": "1234",
     "name": "Dummy33",
@@ -382,7 +404,7 @@
     "birthYear": 0
   },
   {
-    "id": 39,
+    "id": 41,
     "loginId": "dummy34",
     "password": "1234",
     "name": "Dummy34",
@@ -392,7 +414,7 @@
     "birthYear": 0
   },
   {
-    "id": 40,
+    "id": 42,
     "loginId": "dummy35",
     "password": "1234",
     "name": "Dummy35",
@@ -402,7 +424,7 @@
     "birthYear": 0
   },
   {
-    "id": 41,
+    "id": 43,
     "loginId": "dummy36",
     "password": "1234",
     "name": "Dummy36",
@@ -412,7 +434,7 @@
     "birthYear": 0
   },
   {
-    "id": 42,
+    "id": 44,
     "loginId": "dummy37",
     "password": "1234",
     "name": "Dummy37",
@@ -422,7 +444,7 @@
     "birthYear": 0
   },
   {
-    "id": 43,
+    "id": 45,
     "loginId": "dummy38",
     "password": "1234",
     "name": "Dummy38",
@@ -432,7 +454,7 @@
     "birthYear": 0
   },
   {
-    "id": 44,
+    "id": 46,
     "loginId": "dummy39",
     "password": "1234",
     "name": "Dummy39",
@@ -442,7 +464,7 @@
     "birthYear": 0
   },
   {
-    "id": 45,
+    "id": 47,
     "loginId": "dummy40",
     "password": "1234",
     "name": "Dummy40",
@@ -452,7 +474,7 @@
     "birthYear": 0
   },
   {
-    "id": 46,
+    "id": 48,
     "loginId": "dummy41",
     "password": "1234",
     "name": "Dummy41",
@@ -462,7 +484,7 @@
     "birthYear": 0
   },
   {
-    "id": 47,
+    "id": 49,
     "loginId": "dummy42",
     "password": "1234",
     "name": "Dummy42",
@@ -472,7 +494,7 @@
     "birthYear": 0
   },
   {
-    "id": 48,
+    "id": 50,
     "loginId": "dummy43",
     "password": "1234",
     "name": "Dummy43",
@@ -482,7 +504,7 @@
     "birthYear": 0
   },
   {
-    "id": 49,
+    "id": 51,
     "loginId": "dummy44",
     "password": "1234",
     "name": "Dummy44",
@@ -492,7 +514,7 @@
     "birthYear": 0
   },
   {
-    "id": 50,
+    "id": 52,
     "loginId": "dummy45",
     "password": "1234",
     "name": "Dummy45",
@@ -502,7 +524,7 @@
     "birthYear": 0
   },
   {
-    "id": 51,
+    "id": 53,
     "loginId": "dummy46",
     "password": "1234",
     "name": "Dummy46",
@@ -512,7 +534,7 @@
     "birthYear": 0
   },
   {
-    "id": 52,
+    "id": 54,
     "loginId": "dummy47",
     "password": "1234",
     "name": "Dummy47",
@@ -522,7 +544,7 @@
     "birthYear": 0
   },
   {
-    "id": 53,
+    "id": 55,
     "loginId": "dummy48",
     "password": "1234",
     "name": "Dummy48",
@@ -532,7 +554,7 @@
     "birthYear": 0
   },
   {
-    "id": 54,
+    "id": 56,
     "loginId": "dummy49",
     "password": "1234",
     "name": "Dummy49",
@@ -542,7 +564,7 @@
     "birthYear": 0
   },
   {
-    "id": 55,
+    "id": 57,
     "loginId": "dummy50",
     "password": "1234",
     "name": "Dummy50",
