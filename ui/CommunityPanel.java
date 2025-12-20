@@ -48,7 +48,7 @@ public class CommunityPanel extends JPanel {
     }
 
     // =========================================================================
-    // [화면 1] 게시글 목록 패널 (List View)
+    // [화면 1] 게시글 목록
     // =========================================================================
     private JPanel createListPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -59,45 +59,37 @@ public class CommunityPanel extends JPanel {
         top.add(refreshBtn);
         top.add(writeBtn);
 
-        String[] columnNames = {"번호", "제목", "작성자", "POST_ID", "TYPE"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) { return false; }
+        String[] cols = {"번호", "제목", "작성자", "POST_ID", "TYPE"};
+        tableModel = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         postTable = new JTable(tableModel);
         postTable.setRowHeight(25);
 
-        // POST_ID 컬럼 숨기기
+        // 숨김 컬럼
         postTable.getColumnModel().getColumn(3).setMinWidth(0);
         postTable.getColumnModel().getColumn(3).setMaxWidth(0);
-        postTable.getColumnModel().getColumn(3).setWidth(0);
-
         postTable.getColumnModel().getColumn(4).setMinWidth(0);
         postTable.getColumnModel().getColumn(4).setMaxWidth(0);
-        postTable.getColumnModel().getColumn(4).setWidth(0);
 
-        // 더블클릭 → 상세 보기
         postTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    int viewRow = postTable.getSelectedRow();
-                    if (viewRow != -1) {
-                        int modelRow = postTable.convertRowIndexToModel(viewRow);
-                        Long postId = (Long) tableModel.getValueAt(modelRow, 3);
-                        String type = (String) tableModel.getValueAt(modelRow, 4);
-                        if ("NOTICE".equals(type)) {
-                            showAnnouncementDetail(postId); // 공지사항은 팝업으로
-                        } else {
-                            showPostDetail(postId); // 일반글은 상세 화면으로
-                        }
+                    int row = postTable.getSelectedRow();
+                    if (row == -1) return;
+
+                    Long postId = (Long) tableModel.getValueAt(row, 3);
+                    String type = (String) tableModel.getValueAt(row, 4);
+
+                    if ("NOTICE".equals(type)) {
+                        showAnnouncementDetail(postId);
+                    } else {
+                        showPostDetail(postId);
                     }
                 }
             }
         });
-
-        panel.add(top, BorderLayout.NORTH);
-        panel.add(new JScrollPane(postTable), BorderLayout.CENTER);
 
         refreshBtn.addActionListener(e -> loadPosts());
         writeBtn.addActionListener(e -> {
@@ -106,61 +98,70 @@ public class CommunityPanel extends JPanel {
             cardLayout.show(mainPanel, "WRITE");
         });
 
+        panel.add(top, BorderLayout.NORTH);
+        panel.add(new JScrollPane(postTable), BorderLayout.CENTER);
         return panel;
     }
 
     // =========================================================================
-    // [화면 2] 글쓰기 패널 (Write View)
+    // [화면 2] 글쓰기 패널 (제목 + 본문 정상)
     // =========================================================================
     private JPanel createWritePanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
-        inputPanel.add(new JLabel("제목:"), BorderLayout.NORTH);
-        inputPanel.add(titleField, BorderLayout.CENTER);
+        // 제목 영역
+        JPanel titlePanel = new JPanel(new BorderLayout(5, 5));
+        titlePanel.add(new JLabel("제목:"), BorderLayout.NORTH);
+        titlePanel.add(titleField, BorderLayout.CENTER);
 
+        // 본문 영역
         JPanel contentPanel = new JPanel(new BorderLayout(5, 5));
         contentPanel.add(new JLabel("내용:"), BorderLayout.NORTH);
         contentArea.setLineWrap(true);
+        contentArea.setWrapStyleWord(true);
         contentPanel.add(new JScrollPane(contentArea), BorderLayout.CENTER);
 
-        JPanel center = new JPanel(new BorderLayout(10, 10));
-        center.add(inputPanel, BorderLayout.NORTH);
-        center.add(contentPanel, BorderLayout.CENTER);
+        // 제목 / 본문 분할
+        JSplitPane splitPane = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                titlePanel,
+                contentPanel
+        );
+        splitPane.setDividerLocation(60);
+        splitPane.setResizeWeight(0.1);
 
+        panel.add(splitPane, BorderLayout.CENTER);
+
+        // 버튼
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveBtn = new JButton("저장");
         JButton cancelBtn = new JButton("취소");
         btnPanel.add(saveBtn);
         btnPanel.add(cancelBtn);
 
-        panel.add(center, BorderLayout.CENTER);
-        panel.add(btnPanel, BorderLayout.SOUTH);
-
         cancelBtn.addActionListener(e -> cardLayout.show(mainPanel, "LIST"));
 
         saveBtn.addActionListener(e -> {
             String title = titleField.getText().trim();
             String content = contentArea.getText().trim();
+
             if (title.isEmpty() || content.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "제목과 내용을 모두 입력해주세요.");
+                JOptionPane.showMessageDialog(this, "제목과 내용을 모두 입력하세요.");
                 return;
             }
 
-            // authorName 포함해서 컨트롤러에 전달
             controller.post(user.getId(), user.getName(), title, content);
-
-            JOptionPane.showMessageDialog(this, "게시글이 등록되었습니다.");
             loadPosts();
             cardLayout.show(mainPanel, "LIST");
         });
 
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
     // =========================================================================
-    // [화면 3] 상세 보기 및 댓글 패널 (Detail View)
+    // [화면 3] 상세 보기 + 댓글 (위/아래 크기 조절)
     // =========================================================================
     private JPanel createDetailPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -179,40 +180,31 @@ public class CommunityPanel extends JPanel {
 
         deleteBtn.addActionListener(e -> {
             if (currentPostId == null) return;
-
-            int choice = JOptionPane.showConfirmDialog(
-                    this,
-                    "이 게시글을 삭제하시겠습니까?",
-                    "삭제 확인",
-                    JOptionPane.YES_NO_OPTION
-            );
-            if (choice != JOptionPane.YES_OPTION) return;
-
-            boolean ok = controller.deletePost(currentPostId, user);
-            if (!ok) {
+            if (!controller.deletePost(currentPostId, user)) {
                 JOptionPane.showMessageDialog(this, "삭제 권한이 없습니다.");
                 return;
             }
-
-            JOptionPane.showMessageDialog(this, "게시글이 삭제되었습니다.");
             currentPostId = null;
-            cardLayout.show(mainPanel, "LIST");
             loadPosts();
+            cardLayout.show(mainPanel, "LIST");
         });
 
+        panel.add(topBar, BorderLayout.NORTH);
+
+        // 본문
         JPanel postPanel = new JPanel(new BorderLayout(5, 5));
         detailTitleLabel.setFont(new Font("맑은 고딕", Font.BOLD, 18));
         detailContentArea.setEditable(false);
-        detailContentArea.setBackground(new Color(240, 240, 240));
-        detailContentArea.setBorder(BorderFactory.createTitledBorder("본문"));
-
+        detailContentArea.setLineWrap(true);
+        detailContentArea.setWrapStyleWord(true);
         postPanel.add(detailTitleLabel, BorderLayout.NORTH);
         postPanel.add(new JScrollPane(detailContentArea), BorderLayout.CENTER);
-        postPanel.setPreferredSize(new Dimension(0, 220));
 
+        // 댓글
         JPanel commentPanel = new JPanel(new BorderLayout(5, 5));
-        commentPanel.setBorder(BorderFactory.createTitledBorder("댓글 목록"));
         commentArea.setEditable(false);
+        commentArea.setLineWrap(true);
+        commentArea.setWrapStyleWord(true);
         commentPanel.add(new JScrollPane(commentArea), BorderLayout.CENTER);
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
@@ -230,94 +222,83 @@ public class CommunityPanel extends JPanel {
             loadComments(currentPostId);
         });
 
-        panel.add(topBar, BorderLayout.NORTH);
-        panel.add(postPanel, BorderLayout.CENTER);
-        panel.add(commentPanel, BorderLayout.SOUTH);
+        JSplitPane splitPane = new JSplitPane(
+                JSplitPane.VERTICAL_SPLIT,
+                postPanel,
+                commentPanel
+        );
+        splitPane.setDividerLocation(260);
+        splitPane.setResizeWeight(0.6);
 
+        panel.add(splitPane, BorderLayout.CENTER);
         return panel;
     }
 
     // =========================================================================
-    // [로직] 데이터 로드 및 화면 갱신
+    // 데이터 로딩
     // =========================================================================
-
     private void loadPosts() {
         tableModel.setRowCount(0);
-        List<CommunityPost> posts = controller.listPosts();
-        // 1. 공지사항 로드 (상단 고정)
-        List<Announcement> notices = controller.listAnnouncements();
-        // 최신 공지가 위로 오도록 정렬 (ID 역순)
-        notices.sort((a1, a2) -> Long.compare(a2.getId(), a1.getId()));
 
-        for (Announcement a : notices) {
+        for (Announcement a : controller.listAnnouncements()) {
             tableModel.addRow(new Object[]{
-                    "📢",             // 번호 대신 아이콘
+                    "📢",
                     "[공지] " + a.getTitle(),
                     "관리자",
                     a.getId(),
-                    "NOTICE"          // 타입 지정
+                    "NOTICE"
             });
         }
 
-        // 최신 글이 위로
-        posts.sort((p1, p2) -> Long.compare(
-                p2.getId() != null ? p2.getId() : 0L,
-                p1.getId() != null ? p1.getId() : 0L
-        ));
-
-        int number = 1;
-        for (CommunityPost p : posts) {
-            String authorLabel = controller.getUserLabel(p.getAuthorId());
+        int num = 1;
+        for (CommunityPost p : controller.listPosts()) {
             tableModel.addRow(new Object[]{
-                    number++,        // 화면용 번호
+                    num++,
                     p.getTitle(),
-                    authorLabel,
-                    p.getId(),        // 숨김 컬럼 (실제 ID)
+                    controller.getUserLabel(p.getAuthorId()),
+                    p.getId(),
                     "POST"
             });
         }
     }
 
-    private void showAnnouncementDetail(Long annId) {
-        // 컨트롤러에서 ID로 공지사항 찾는 메서드가 없다면 리스트에서 찾음
-        controller.listAnnouncements().stream()
-                .filter(a -> a.getId().equals(annId))
-                .findFirst()
-                .ifPresent(a -> {
-                    JTextArea area = new JTextArea(a.getContent());
-                    area.setEditable(false);
-                    area.setLineWrap(true);
-                    area.setWrapStyleWord(true);
-                    area.setPreferredSize(new Dimension(400, 300));
-
-                    JOptionPane.showMessageDialog(this, new JScrollPane(area),
-                            "📢 " + a.getTitle(), JOptionPane.INFORMATION_MESSAGE);
-                });
-    }
-
     private void showPostDetail(Long postId) {
-        this.currentPostId = postId;
-
+        currentPostId = postId;
         CommunityPost post = controller.getPost(postId);
         if (post == null) return;
 
         detailTitleLabel.setText(post.getTitle());
         detailContentArea.setText(post.getContent());
         loadComments(postId);
-
         cardLayout.show(mainPanel, "DETAIL");
+    }
+
+    private void showAnnouncementDetail(Long id) {
+        controller.listAnnouncements().stream()
+                .filter(a -> a.getId().equals(id))
+                .findFirst()
+                .ifPresent(a ->
+                        JOptionPane.showMessageDialog(
+                                this,
+                                a.getContent(),
+                                "공지사항",
+                                JOptionPane.INFORMATION_MESSAGE
+                        )
+                );
     }
 
     private void loadComments(Long postId) {
         commentArea.setText("");
-        List<CommunityComment> comments = controller.listComments(postId);
+        List<CommunityComment> list = controller.listComments(postId);
 
-        if (comments.isEmpty()) {
+        if (list.isEmpty()) {
             commentArea.append("작성된 댓글이 없습니다.\n");
         } else {
-            for (CommunityComment c : comments) {
-                String author = controller.getUserLabel(c.getAuthorId());
-                commentArea.append(author + ": " + c.getContent() + "\n");
+            for (CommunityComment c : list) {
+                commentArea.append(
+                        controller.getUserLabel(c.getAuthorId())
+                                + ": " + c.getContent() + "\n"
+                );
             }
         }
     }

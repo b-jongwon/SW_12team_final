@@ -225,7 +225,13 @@ public class DoctorPanel extends JPanel {
         requestModel.setRowCount(0);
         List<PatientSummary> list = controller.getPendingRequests(doctor.getId());
         for (PatientSummary p : list) {
-            requestModel.addRow(new Object[]{p.getLoginId(), p.getName(), "대기중", p.getAssignmentId()});
+            requestModel.addRow(new Object[]{
+                    p.getLoginId(),
+                    p.getName(),
+                    "연결 대기 중",
+                    p.getAssignmentId()
+            });
+
         }
     }
 

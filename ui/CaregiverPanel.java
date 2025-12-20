@@ -146,7 +146,12 @@ public class CaregiverPanel extends JPanel {
         requestModel.setRowCount(0);
         List<FamilySummary> list = controller.getPendingRequests(caregiver.getId());
         for (FamilySummary f : list) {
-            requestModel.addRow(new Object[]{ f.getLoginId(), f.getName(), "대기중", f.getAssignmentId() });
+            requestModel.addRow(new Object[]{
+                    f.getLoginId(),
+                    f.getName(),
+                    "연결 대기 중",
+                    f.getAssignmentId()
+            });
         }
     }
 
