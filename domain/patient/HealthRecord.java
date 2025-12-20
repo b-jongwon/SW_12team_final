@@ -40,7 +40,14 @@ public class HealthRecord {
 
         // BMI 자동 계산 (키가 0이면 0 처리)
         if (height > 0 && weight > 0) {
-            this.bmi = weight / (height * height);
+            // 1. cm를 m로 변환 (예: 175.0 -> 1.75)
+            double heightInMeters = height / 100.0;
+
+            // 2. 변환된 m 단위로 BMI 계산
+            this.bmi = weight / (heightInMeters * heightInMeters);
+
+            // (선택 사항) 깔끔하게 소수점 2자리까지만 저장하고 싶다면 아래 주석 해제
+            // this.bmi = Math.round(this.bmi * 100) / 100.0;
         } else {
             this.bmi = 0;
         }

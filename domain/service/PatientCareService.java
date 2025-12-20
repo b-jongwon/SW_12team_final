@@ -35,21 +35,11 @@ public class PatientCareService {
         HealthRecord record = new HealthRecord();
         record.setPatientId(patientId);
 
-        // ★ [수정됨] BMI 자동 계산 로직 추가 (이게 없어서 0.0으로 나왔던 것임) ★
-        double calculatedBmi = 0.0;
-        if (height > 0 && weight > 0) {
-            // Main.java의 더미데이터가 미터(m) 단위(1.75 등)로 들어오므로 그대로 계산
-            calculatedBmi = weight / (height * height);
-            // 소수점 첫째 자리 반올림
-            calculatedBmi = Math.round(calculatedBmi * 10.0) / 10.0;
-        }
-
         // 업데이트 메서드 호출 (순서 주의)
         record.update(age, gender, sys, dia, sugar, smoking, drinking,
                 activity, riskFactors, height, weight);
 
-        // ★ 계산된 BMI를 명시적으로 세팅해줌 ★
-        record.setBmi(calculatedBmi);
+
 
         HealthRecord savedRecord = medicalRepo.saveNewRecord(record);
 
