@@ -25,7 +25,29 @@ public class PersonalReport {
         this.createdAt = LocalDateTime.now();
     }
 
-    public PersonalReport(Long patientId, String string, String string1, String advice) {
+    public PersonalReport(Long patientId, String trend, String risk, String advice) {
+        this.patientId = patientId;
+        this.createdAt = LocalDateTime.now();
+        this.summaryText = "건강 데이터 자동 분석 결과";
+
+        // [수정] 들어온 문자열이 여러 줄일 경우 쪼개서 넣기
+        if (trend != null && !trend.isEmpty()) {
+            // \n 으로 자르고, 각 줄의 앞뒤 공백 제거(trim) 후 저장
+            for (String line : trend.split("\n")) {
+                this.trendChartData.add(line.trim());
+            }
+        }
+
+        // risk, advice도 마찬가지로 처리하거나, 단일 문장이면 그대로 add
+        if (risk != null && !risk.isEmpty()) {
+            for (String line : risk.split("\n")) {
+                this.topRiskFactors.add(line.trim());
+            }
+        }
+
+        if (advice != null && !advice.isEmpty()) {
+            this.recommendedGoals.add(advice);
+        }
     }
 
     // 데이터 추가 편의 메서드

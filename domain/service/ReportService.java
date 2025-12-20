@@ -61,6 +61,7 @@ public class ReportService {
                 : "현재 상태 매우 좋음, 운동 지속 권장";
 
         PersonalReport report = new PersonalReport(patientId, trend.toString(), risk.toString(), advice);
+        report.setPeriod(past.getMeasuredAt(), now.getMeasuredAt());
         return reportRepo.savePersonal(report);
     }
 
