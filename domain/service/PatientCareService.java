@@ -26,7 +26,7 @@ public class PatientCareService {
     // [1] 건강 데이터 생성 및 실시간 1차 위험 분석 (신호등 시스템)
     // --------------------------------------------------------------------------
     public HealthRecord createHealthRecord(Long patientId,
-                                           int age, String gender, // [추가됨]
+                                           int age, String gender,
                                            int sys, int dia, double sugar,
                                            String smoking, String drinking,
                                            String activity, String riskFactors,
@@ -35,9 +35,21 @@ public class PatientCareService {
         HealthRecord record = new HealthRecord();
         record.setPatientId(patientId);
 
+        // ★ [수정됨] BMI 자동 계산 로직 추가 (이게 없어서 0.0으로 나왔던 것임) ★
+        double calculatedBmi = 0.0;
+        if (height > 0 && weight > 0) {
+            // Main.java의 더미데이터가 미터(m) 단위(1.75 등)로 들어오므로 그대로 계산
+            calculatedBmi = weight / (height * height);
+            // 소수점 첫째 자리 반올림
+            calculatedBmi = Math.round(calculatedBmi * 10.0) / 10.0;
+        }
+
         // 업데이트 메서드 호출 (순서 주의)
         record.update(age, gender, sys, dia, sugar, smoking, drinking,
                 activity, riskFactors, height, weight);
+
+        // ★ 계산된 BMI를 명시적으로 세팅해줌 ★
+        record.setBmi(calculatedBmi);
 
         HealthRecord savedRecord = medicalRepo.saveNewRecord(record);
 
@@ -45,15 +57,19 @@ public class PatientCareService {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
 
+        // 혈압 (140/90 이상)
         if (sys >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD || dia >= RiskConfiguration.BP_DIASTOLIC_THRESHOLD) {
             score += 40.0; reason.append("고혈압 ");
         }
+        // 혈당 (126 이상)
         if (sugar >= RiskConfiguration.SUGAR_THRESHOLD) {
             score += 30.0; reason.append("당뇨 ");
         }
+        // BMI (25 이상 비만)
         if (savedRecord.getBmi() >= RiskConfiguration.BMI_THRESHOLD) {
             score += 10.0; reason.append("비만 ");
         }
+        // 흡연 여부
         if ("Yes".equalsIgnoreCase(smoking)) {
             score += 15.0; reason.append("흡연 ");
         }
@@ -112,7 +128,6 @@ public class PatientCareService {
         if (records.isEmpty()) return Collections.emptyList();
 
         List<ComplicationRisk> result = new ArrayList<>();
-        // 모든 기록에 대해 계산하거나, 최신 기록만 계산할 수도 있음. 여기선 전체 이력 반환.
         for (HealthRecord record : records) {
             result.add(calculateComplicationDynamic(record));
         }
@@ -123,10 +138,9 @@ public class PatientCareService {
     // [4] 맞춤형 콘텐츠 추천
     // --------------------------------------------------------------------------
     public List<ContentItem> getRecommendedContents(Long patientId) {
-        List<RiskAssessment> risks = getRisk(patientId); // 재계산된 리스크 사용
+        List<RiskAssessment> risks = getRisk(patientId);
         String currentLevel = "정상";
         if (!risks.isEmpty()) {
-            // 가장 최신(마지막) 위험도의 레벨을 가져옴
             currentLevel = risks.get(risks.size() - 1).getRiskLevel();
         }
         return contentRepo.findContentsByRisk(currentLevel);
@@ -136,7 +150,7 @@ public class PatientCareService {
     // Helper Methods: 비즈니스 로직(알고리즘)이 들어가는 곳
     // ==========================================================================
 
-    // A. 뇌졸중 위험도 계산 (기존 로직 유지)
+    // A. 뇌졸중 위험도 계산
     private RiskAssessment calculateRiskDynamic(HealthRecord r) {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
@@ -168,37 +182,32 @@ public class PatientCareService {
         RiskAssessment risk = new RiskAssessment();
         risk.setPatientId(r.getPatientId());
         risk.assess(score, score, level, reason.toString());
-        risk.setAssessedAt(r.getMeasuredAt()); // 기록된 시간 기준
+        risk.setAssessedAt(r.getMeasuredAt());
         return risk;
     }
 
-    // B. 합병증(심혈관) 위험도 계산 (상세 알고리즘 적용)
+    // B. 합병증(심혈관) 위험도 계산
     private ComplicationRisk calculateComplicationDynamic(HealthRecord r) {
         double riskScore = 0.0;
         List<String> factors = new ArrayList<>();
 
-        double highBpLimit = RiskConfiguration.BP_SYSTOLIC_THRESHOLD + 20;
+        double highBpLimit = RiskConfiguration.BP_SYSTOLIC_THRESHOLD + 20; // 160
 
         if (r.getSystolicBp() >= highBpLimit) riskScore += 30;
         else if (r.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD) riskScore += 15;
 
-        // 혈당도 마찬가지
         if (r.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD) riskScore += 20;
 
-        // 3. 흡연 여부
         if ("Yes".equalsIgnoreCase(r.getSmoking())) {
             riskScore += 20; factors.add("흡연");
         }
 
-        // 4. BMI 가중치
         if (r.getBmi() >= 30) {
             riskScore += 10; factors.add("고도비만");
         }
 
-        // 최대 점수 100점 제한
         if (riskScore > 100) riskScore = 100;
 
-        // 결과 문자열 생성
         String recommendation;
         if (riskScore >= 70) recommendation = "즉시 전문의 상담 필요 (" + String.join(", ", factors) + ")";
         else if (riskScore >= 40) recommendation = "생활 습관 개선 시급 (" + String.join(", ", factors) + ")";
@@ -215,7 +224,6 @@ public class PatientCareService {
     public List<DoctorNote> getMyNotes(Long pid) { return medicalRepo.findNotesByPatient(pid); }
     public List<ScheduledExam> getMyExams(Long pid) { return medicalRepo.findExamsByPatient(pid); }
 
-    // 1. 수동 위험도 생성 (Controller 호환용)
     public RiskAssessment createRisk(Long pid, double score, double percent, String level, String summary) {
         RiskAssessment r = new RiskAssessment();
         r.setPatientId(pid);
@@ -223,7 +231,6 @@ public class PatientCareService {
         return medicalRepo.saveRisk(r);
     }
 
-    // 2. 수동 합병증 위험 생성 (Controller 호환용)
     public ComplicationRisk createCompRisk(Long pid, String type, double prob, String rec) {
         ComplicationRisk r = new ComplicationRisk();
         r.setPatientId(pid);

@@ -6,15 +6,6 @@
     "caregiverIds": [
       4
     ],
-    "createdAt": "2025-12-21T03:56:45.033424800"
-  },
-  {
-    "id": 2,
-    "patientId": 2,
-    "doctorId": 3,
-    "caregiverIds": [
-      4
-    ],
-    "createdAt": "2025-12-21T03:56:45.046462300"
+    "createdAt": "2025-12-21T04:20:18.872201300"
   }
 ]

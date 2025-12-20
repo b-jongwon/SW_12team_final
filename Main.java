@@ -37,8 +37,6 @@ public class Main {
         try {
             assignment.assign(p1.getId(), d1.getId(), null);
             assignment.assign(p1.getId(), null, c1.getId());
-            assignment.assign(p2.getId(), d1.getId(), null);
-            assignment.assign(p2.getId(), null, c1.getId());
             System.out.println("✅ 의사/보호자 <-> 환자 연결 완료");
         } catch (Exception e) {
             System.out.println("⚠️ 배정 중 오류: " + e.getMessage());
@@ -64,14 +62,7 @@ public class Main {
                 "가족력 있음", 1.75, 85.0
         );
 
-        // [환자2] 28세 여성, 정상군
-        patient.addRecord(
-                p2.getId(),
-                28, "Female",      // [추가된 부분] 나이, 성별
-                115, 75, 90.0,
-                "No", "None", "High",
-                "없음", 1.65, 55.0
-        );
+
 
         System.out.println("✅ 환자1(고위험), 환자2(정상) 초기 기록 입력 완료");
 

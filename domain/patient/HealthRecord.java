@@ -68,4 +68,7 @@ public class HealthRecord {
     public void setId(Long id) {
         this.id = id;
     }
+    public void setBmi(double bmi) {
+        this.bmi = bmi;
+    }
 }
