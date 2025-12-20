@@ -21,7 +21,7 @@ public class RegisterFrame extends JFrame {
         JPasswordField pwField = new JPasswordField();
         JTextField nameField = new JTextField();
 
-        String[] roles = {"PATIENT", "DOCTOR", "CAREGIVER"};
+        String[] roles = {"환자", "의사", "보호자"};
         JComboBox<String> roleCombo = new JComboBox<>(roles);
 
         JButton registerBtn = new JButton("가입하기");
@@ -32,7 +32,7 @@ public class RegisterFrame extends JFrame {
         panel.add(pwField);
         panel.add(new JLabel("Name:"));
         panel.add(nameField);
-        panel.add(new JLabel("Role 선택:"));
+        panel.add(new JLabel("역할 선택:"));
         panel.add(roleCombo);
 
         getContentPane().add(panel, BorderLayout.CENTER);

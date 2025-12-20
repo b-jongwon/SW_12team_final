@@ -91,26 +91,37 @@ public class PatientPanel extends JPanel {
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        JTextArea output = new JTextArea();
-        output.setEditable(false);
-        output.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        // [변경 1] 텍스트 영역(JTextArea) 대신 리스트 모델과 JList 생성
+        DefaultListModel<HealthRecord> listModel = new DefaultListModel<>();
+        JList<HealthRecord> historyList = new JList<>(listModel);
+
+        // [변경 2] ★ 아까 만든 예쁜 카드 렌더러 장착!
+        historyList.setCellRenderer(new HealthRecordRenderer());
 
         JButton refreshBtn = new JButton("목록 새로고침");
         refreshBtn.addActionListener(e -> {
+            listModel.clear(); // 기존 목록 초기화
             List<HealthRecord> list = patientController.getRecords(user.getId());
-            output.setText("=== 📋 나의 건강 기록 히스토리 ===\n\n");
 
-            if (list.isEmpty())
-                output.append("아직 입력된 기록이 없습니다.\n");
-            else {
+            if (list.isEmpty()) {
+                // 기록이 없을 때 안내 (리스트에는 텍스트를 못 넣으므로 팝업이나 빈 상태 유지)
+                // 필요하다면 더미 데이터를 넣거나 메시지를 띄울 수 있음
+            } else {
+                // [변경 3] 최신순(날짜 내림차순)으로 정렬하여 보기 좋게 만듦
+                list.sort((r1, r2) -> r2.getMeasuredAt().compareTo(r1.getMeasuredAt()));
+
+                // 데이터를 모델에 추가 (이제 텍스트가 아니라 객체 자체를 넣음)
                 for (HealthRecord r : list) {
-                    output.append(r.summary() + "\n--------------------------------------------------\n");
+                    listModel.addElement(r);
                 }
             }
         });
 
+        // 패널이 열릴 때 자동으로 한 번 로드
+        refreshBtn.doClick();
+
         panel.add(refreshBtn, BorderLayout.NORTH);
-        panel.add(new JScrollPane(output), BorderLayout.CENTER);
+        panel.add(new JScrollPane(historyList), BorderLayout.CENTER);
         return panel;
     }
 
