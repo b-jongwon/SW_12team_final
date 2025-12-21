@@ -44,7 +44,6 @@ public class MainFrame extends JFrame {
 
         // 메뉴 패널에 로그아웃 버튼 추가 (가장 앞에 추가하거나 뒤에 추가)
         topMenu.add(logoutBtn);
-        // 구분선 역할의 빈 라벨 추가 (디자인용)
         topMenu.add(new JLabel(" | "));
         // =========================================================
         // [핵심 로직] 사용자 역할(Role)에 따른 화면 구성 분기
@@ -140,7 +139,7 @@ public class MainFrame extends JFrame {
     }
 
     // -----------------------------------------------------------------
-    // [관리자용] 화면 구성 (NEW)
+    // [관리자용] 화면 구성
     // -----------------------------------------------------------------
     private void configureForAdmin() {
         JButton adminBtn = new JButton("⚙️ 시스템 관리");

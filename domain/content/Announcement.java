@@ -12,7 +12,7 @@ public class Announcement {
         this.createdAt = LocalDateTime.now();
     }
 
-    // [핵심] 생성 메서드
+
     public void create(String title, String content) {
         this.title = title;
         this.content = content;

@@ -6,12 +6,12 @@ public class ContentItem {
     private String title;
     private String description;
 
-    // [NEW] 타겟 위험군 추가 ("ALL", "고위험", "주의", "정상")
+
     private String targetRisk;
 
     public ContentItem() {}
 
-    // [수정] 생성 메서드에 targetRisk 추가
+
     public void create(String category, String title, String description, String targetRisk) {
         this.category = category;
         this.title = title;
@@ -40,11 +40,11 @@ public class ContentItem {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    // [NEW] Getter & Setter
+
     public String getTargetRisk() { return targetRisk; }
     public void setTargetRisk(String targetRisk) { this.targetRisk = targetRisk; }
 
-    // [NEW] UI 리스트에 보여줄 요약 문구
+
     public String getSummary() {
         String badge = "ALL".equals(targetRisk) ? "[공통]" : "[" + targetRisk + " 전용]";
         return String.format("%s [%s] %s", badge, category, title);

@@ -9,7 +9,7 @@ public class AdminService {
 
     private final ContentRepository repo = new ContentRepository();
 
-    // [핵심] 공지사항 등록 및 저장
+    //  공지사항 등록 및 저장
     public Announcement postAnnouncement(String title, String content) {
         Announcement a = new Announcement();
         a.create(title, content);

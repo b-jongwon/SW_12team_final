@@ -22,7 +22,7 @@ public class CommunityRepository {
     private static final String CHECKLIST_FILE = "data/community_checklist.json";
     private static final String ANNOUNCEMENT_FILE = "data/announcements.json";
 
-    // ------------------ 내부 공통 헬퍼 ------------------
+
 
     private <T> List<T> loadList(String path, Type type) {
         List<T> list = JsonUtil.readJson(path, type);

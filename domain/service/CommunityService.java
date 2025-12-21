@@ -39,10 +39,9 @@ public class CommunityService {
         return repo.getComments(postId);
     }
 
-    // [수정] 인자 4개로 변경 (targetRisk 추가) -> 오류 해결
+    // 인자 4개로 변경 (targetRisk 추가) -> 오류 해결
     public ContentItem createContent(String category, String title, String description, String targetRisk) {
         ContentItem item = new ContentItem();
-        // ContentItem의 변경된 create 메서드(인자 4개)에 맞춰 호출
         item.create(category, title, description, targetRisk);
         return repo.saveContent(item);
     }

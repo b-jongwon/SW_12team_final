@@ -22,7 +22,7 @@ public class CommunityPost {
         this.createdAt = createdAt;
     }
 
-    // 게시글 생성 (authorName 포함, 네가 쓰던 시그니처 그대로 유지)
+
     public void create(Long authorId, String title, String authorName, String content) {
         this.authorId = authorId;
         this.authorName = authorName;

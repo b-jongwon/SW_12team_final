@@ -9,7 +9,6 @@ public class MessageThread {
     private Long patientId;
     private Long doctorId;
 
-    // [중요] 간병인을 리스트로 변경
     private List<Long> caregiverIds = new ArrayList<>();
 
     private LocalDateTime createdAt;
@@ -25,7 +24,7 @@ public class MessageThread {
         this.doctorId = doctorId;
     }
 
-    // [중요] 간병인 추가 메서드
+
     public void addCaregiver(Long caregiverId) {
         if (!caregiverIds.contains(caregiverId)) {
             caregiverIds.add(caregiverId);
@@ -37,7 +36,7 @@ public class MessageThread {
     public Long getPatientId() { return patientId; }
     public Long getDoctorId() { return doctorId; }
 
-    // [중요] getter가 List<Long>을 반환해야 함
+
     public List<Long> getCaregiverIds() { return caregiverIds; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }

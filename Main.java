@@ -89,10 +89,10 @@ public class Main {
 
             // 2. 랜덤 데이터 생성
 
-            // [NEW] 나이 (20세 ~ 79세)
+            // 나이 (20세 ~ 79세)
             int age = 20 + random.nextInt(60);
 
-            // [NEW] 성별
+            // 성별
             String gender = random.nextBoolean() ? "Male" : "Female";
 
             // 혈압/혈당 (30% 확률로 고위험군)
@@ -113,7 +113,7 @@ public class Main {
             String smoking = random.nextBoolean() ? "Yes" : "No";
             String drinking = random.nextBoolean() ? "Frequent" : "None";
 
-            // 3. 기록 저장 (변경된 파라미터 적용)
+            // 3. 기록 저장
             patientCtrl.addRecord(
                     dummyUser.getId(),
                     age, gender,  // [추가됨]

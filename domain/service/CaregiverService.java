@@ -20,15 +20,15 @@ public class CaregiverService {
     private final UserRepository userRepo = new UserRepository();
     private final MedicalRepository medicalRepo = new MedicalRepository();
 
-    // 채팅방 입장용 (기존 유지)
+    // 채팅방 입장용
     private final MessagingService messagingService = new MessagingService();
 
-    // 1. 내 가족 목록 (수락된 사람만)
+    // 1. 내 가족 목록
     public List<FamilySummary> getMyFamily(Long caregiverId) {
         return getListByStatus(caregiverId, "ACCEPTED");
     }
 
-    // 2. 연결 요청 목록 (대기 중인 사람만)
+    // 2. 연결 요청 목록
     public List<FamilySummary> getPendingRequests(Long caregiverId) {
         return getListByStatus(caregiverId, "PENDING");
     }
@@ -45,7 +45,7 @@ public class CaregiverService {
                 assignment.accept();
                 assignmentRepo.updateAssignment(assignment);
 
-                // 채팅방 입장 (간병인)
+                // 채팅방 입장
                 messagingService.joinRoom(assignment.getPatientId(), null, assignment.getCaregiverId());
             } else {
                 assignment.reject();
@@ -64,9 +64,7 @@ public class CaregiverService {
         return medicalRepo.findNotesByPatient(patientId);
     }
 
-    // ----------------------------
-    // 핵심: "현재 기준으로" 즉석 위험도 계산
-    // ----------------------------
+
     private HealthRecord getLatestRecord(Long patientId) {
         List<HealthRecord> records = medicalRepo.findRecordsByPatient(patientId);
         if (records.isEmpty()) return null;
@@ -83,7 +81,7 @@ public class CaregiverService {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
 
-        // 개인 맞춤 기준(현재 RiskConfiguration 기준값 기반)
+        // 개인 맞춤 기준
         RiskConfiguration.PersonalCriteria c =
                 RiskConfiguration.getPersonalizedCriteria(r.getAge(), r.getGender());
 
@@ -122,7 +120,6 @@ public class CaregiverService {
         return risk;
     }
 
-    // 헬퍼 메서드 (요약 DTO 만들기)
     private List<FamilySummary> getListByStatus(Long caregiverId, String status) {
         List<FamilySummary> result = new ArrayList<>();
         List<PatientAssignment> list = assignmentRepo.findAssignmentsByCaregiver(caregiverId);
@@ -143,8 +140,7 @@ public class CaregiverService {
                 loginId = p.get().getLoginId();
             }
 
-            // ✅ 저장된 risk_assessments.json을 보지 말고,
-            // ✅ 최신 HealthRecord 기준으로 "현재 설정값"으로 즉석 계산
+
             HealthRecord latest = getLatestRecord(patientId);
             RiskAssessment current = calculateCurrentRisk(latest);
 
@@ -161,7 +157,7 @@ public class CaregiverService {
         return result;
     }
 
-    // DTO
+
     public static class FamilySummary {
         private Long patientId;
         private String name;

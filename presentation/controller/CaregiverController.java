@@ -15,12 +15,12 @@ public class CaregiverController {
         return service.getMyFamily(caregiverId);
     }
 
-    // [NEW]
+
     public List<CaregiverService.FamilySummary> getPendingRequests(Long caregiverId) {
         return service.getPendingRequests(caregiverId);
     }
 
-    // [NEW]
+
     public void reply(Long assignmentId, boolean accept) {
         service.replyToRequest(assignmentId, accept);
     }

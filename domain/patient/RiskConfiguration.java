@@ -15,9 +15,7 @@ public class RiskConfiguration {
     public static double BMI_THRESHOLD = 25.0;
     public static double CHOLESTEROL_THRESHOLD = 200.0;
 
-    // --------------------------------------------------------
-    // [New] 환자 맞춤형 기준을 담을 객체 (DTO)
-    // --------------------------------------------------------
+
     public static class PersonalCriteria {
         public double maxSys;
         public double maxDia;
@@ -32,9 +30,7 @@ public class RiskConfiguration {
         }
     }
 
-    // --------------------------------------------------------
-    // ★ [핵심] 나이와 성별에 따라 기준을 동적으로 계산해주는 메서드 ★
-    // --------------------------------------------------------
+
     public static PersonalCriteria getPersonalizedCriteria(int age, String gender) {
         // 1. 기본 설정값에서 시작
         double targetSys = BP_SYSTOLIC_THRESHOLD;
@@ -50,18 +46,16 @@ public class RiskConfiguration {
             targetSys += 10; // 65세 이상은 150까지 허용 (예시)
         }
 
-        // 3. 성별/나이에 따른 BMI 보정 (예: 노인은 너무 마르면 안 좋음)
+        // 3. 성별/나이에 따른 BMI 보정
         if (age >= 65) {
             targetBmi += 2.0; // 노인은 BMI 27까지도 정상으로 봄
         }
 
         // 4. 성별에 따른 보정 (예: 남성이 복부비만 기준이 좀 더 관대하다면 등등)
-        // 필요하면 추가: if ("Male".equals(gender)) { ... }
 
         return new PersonalCriteria(targetSys, targetDia, targetSugar, targetBmi);
     }
 
-    // ... (아래 load, save, ConfigData 클래스는 기존 코드 그대로 유지) ...
 
     private static class ConfigData {
         double sys, dia, sugar, bmi, chol;

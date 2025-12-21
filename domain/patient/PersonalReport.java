@@ -30,7 +30,7 @@ public class PersonalReport {
         this.createdAt = LocalDateTime.now();
         this.summaryText = "건강 데이터 자동 분석 결과";
 
-        // [수정] 들어온 문자열이 여러 줄일 경우 쪼개서 넣기
+
         if (trend != null && !trend.isEmpty()) {
             // \n 으로 자르고, 각 줄의 앞뒤 공백 제거(trim) 후 저장
             for (String line : trend.split("\n")) {
@@ -67,7 +67,6 @@ public class PersonalReport {
     public void setComplicationSummary(String summary) { this.complicationSummary = summary; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 
-    // [핵심] UI(Dialog)에서 텍스트로 보여주기 위한 포맷팅 메서드 (추가됨)
     public String getFormatText() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         StringBuilder sb = new StringBuilder();

@@ -9,12 +9,7 @@ import com.google.gson.reflect.TypeToken;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * 리포트 전용 레포지토리.
- * - PersonalReport
- * - GroupComparisonResult
- * 두 종류만 관리 (다이어그램 구조에 맞게 단순화).
- */
+
 public class ReportRepository {
 
     private final BaseJsonRepository<PersonalReport> personalRepo =

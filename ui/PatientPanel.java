@@ -749,7 +749,7 @@ public class PatientPanel extends JPanel {
         }
     }
     // ==========================================
-    // [시각화용 내부 클래스 3] 또래 비교 전용 렌더러 (막대 2개 비교)
+    // 또래 비교 전용 렌더러 (막대 2개 비교)
     // ==========================================
     class CompareRenderer extends JPanel implements ListCellRenderer<GroupComparisonResult> {
         private JLabel dateLabel = new JLabel();
@@ -803,7 +803,7 @@ public class PatientPanel extends JPanel {
                 dateLabel.setText("-");
             }
 
-            // 2. [핵심] 항목별로 그래프 최대값(Max) 다르게 설정 (그래프가 꽉 차 보이게)
+            // 2. 항목별로 그래프 최대값(Max) 다르게 설정 (그래프가 꽉 차 보이게)
             int maxScale = 100; // 기본(위험도 점수 등)
             String unit = "점";
 
@@ -826,7 +826,6 @@ public class PatientPanel extends JPanel {
             avgBar.setString(String.format("그룹 평균: %.1f %s", value.getGroupAverage(), unit));
 
             // 4. 색상 로직 (내가 평균보다 높으면 빨강, 낮으면 파랑)
-            // (일반적으로 수치가 낮을수록 건강하므로)
             if (value.getPatientMetric() > value.getGroupAverage()) {
                 myBar.setForeground(new Color(255, 100, 100)); // 높음(주의) -> 빨강
             } else {

@@ -36,8 +36,7 @@ public class PatientCareService {
         HealthRecord record = new HealthRecord();
         record.setPatientId(patientId);
 
-        // [수정됨] BMI는 HealthRecord 내부의 update() 메서드에서 자동 계산되도록 함
-        // (여기서 이중으로 계산하거나 setBmi를 호출하지 않음)
+
 
         // 업데이트 메서드 호출
         record.update(age, gender, sys, dia, sugar, smoking, drinking,
@@ -142,11 +141,7 @@ public class PatientCareService {
         return contentRepo.findContentsByRisk(currentLevel);
     }
 
-    // ==========================================================================
-    // Helper Methods: 비즈니스 로직(알고리즘)이 들어가는 곳
-    // ==========================================================================
 
-    // A. 뇌졸중 위험도 계산
     private RiskAssessment calculateRiskDynamic(HealthRecord r) {
         double score = 0.0;
         StringBuilder reason = new StringBuilder();
@@ -251,9 +246,6 @@ public class PatientCareService {
         return comp;
     }
 
-    // ==========================================================================
-    // [중요] PatientController가 사용하는 단순 조회/생성 메서드들 (오류 해결!)
-    // ==========================================================================
 
     public List<HealthRecord> getRecords(Long pid) {
         return medicalRepo.findRecordsByPatient(pid);
@@ -290,8 +282,8 @@ public class PatientCareService {
                 .orElse(records.get(records.size() - 1));
         List<GroupComparisonResult> simulations = new ArrayList<>();
 
-        // 1. [나이대 비교] 내 점수 vs 같은 나이대 평균 점수
-        // (점수가 낮을수록 건강함)
+        // 1. 내 점수 vs 같은 나이대 평균 점수
+
         double myRiskScore = calculateRiskDynamic(last).getRiskScore();
         double ageAvgScore = 35.0; // 시뮬레이션 값 (30~40대 평균)
         if (last.getAge() >= 60) ageAvgScore = 55.0; // 고령층 평균은 좀 더 높음
@@ -307,7 +299,7 @@ public class PatientCareService {
         GroupComparisonResult sim2 = new GroupComparisonResult();
         sim2.setGroupKey("상위 10% 건강 그룹(BMI) 비교");
         sim2.setPatientMetric(last.getBmi());
-        sim2.setGroupAverage(21.5); // 이상적인 BMI
+        sim2.setGroupAverage(21.5);
         sim2.setCreatedAt(java.time.LocalDateTime.now());
         simulations.add(sim2);
 
@@ -315,7 +307,7 @@ public class PatientCareService {
         GroupComparisonResult sim3 = new GroupComparisonResult();
         sim3.setGroupKey("동년배 평균 혈당 비교");
         sim3.setPatientMetric(last.getBloodSugar());
-        sim3.setGroupAverage(95.0); // 평균 공복혈당
+        sim3.setGroupAverage(95.0);
         sim3.setCreatedAt(java.time.LocalDateTime.now());
         simulations.add(sim3);
 

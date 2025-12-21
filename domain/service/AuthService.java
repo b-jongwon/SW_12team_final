@@ -9,16 +9,13 @@ public class AuthService {
 
     private final UserRepository userRepository = new UserRepository();
 
-    /**
-     * 통합 회원가입 메서드
-     * 입력받은 role에 따라 Doctor, Patient, Caregiver, Admin 객체를 구체적으로 생성합니다.
-     */
+
     public User registerUser(String loginId, String password, String name, String role, String phone, String email) {
 
-        // 1. 비밀번호 처리 (임시로 평문, 추후 해싱 적용 시 여기서 BCrypt 사용)
+        // 1. 비밀번호 처리
         String finalPw = password;
 
-        // 2. 역할(Role)에 따라 구체적인 자식 클래스 객체 생성 (Factory 패턴 적용)
+
         User user;
         switch (role) {
             case "DOCTOR":
@@ -43,15 +40,11 @@ public class AuthService {
                 break;
         }
 
-        // 3. 리포지토리에 저장 (JsonUtil이 알아서 알맞은 타입으로 저장함)
+        // 3. 리포지토리에 저장
         return userRepository.saveNewUser(user);
     }
 
-    /**
-     * 로그인 메서드
-     * 저장된 User 객체를 찾아 비밀번호를 확인합니다.
-     * (JsonUtil의 Deserializer 덕분에 Doctor 객체는 Doctor 타입으로 복원됩니다)
-     */
+
     public Optional<User> login(String loginId, String password) {
         Optional<User> userOpt = userRepository.findByLoginId(loginId);
 

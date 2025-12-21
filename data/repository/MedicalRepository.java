@@ -17,7 +17,6 @@ import java.util.stream.Collectors;
 
 public class MedicalRepository {
 
-    // 1. 기존 리포지토리 필드들
     private final BaseJsonRepository<HealthRecord> healthRepo =
             new BaseJsonRepository<>("data/health_records.json",
                     new TypeToken<List<HealthRecord>>() {}) {};
@@ -39,11 +38,6 @@ public class MedicalRepository {
             new BaseJsonRepository<>("data/scheduled_exams.json",
                     new TypeToken<List<ScheduledExam>>() {}) {};
 
-
-    // -------------------------------------------------------
-    // 기존 메서드들 (HealthRecord, Risk, Complication)
-    // -------------------------------------------------------
-
     // HealthRecord
     public HealthRecord saveNewRecord(HealthRecord record) {
         record.setId(IdGenerator.nextId("health_record"));
@@ -56,7 +50,7 @@ public class MedicalRepository {
                 .filter(r -> r.getPatientId().equals(pid))
                 .collect(Collectors.toList());
     }
-    // [NEW] 또래 비교를 위해 전체 기록 조회
+    // 또래 비교를 위해 전체 기록 조회
     public List<HealthRecord> findAllRecords() {
         return healthRepo.findAll();
     }
@@ -86,9 +80,7 @@ public class MedicalRepository {
                 .collect(Collectors.toList());
     }
 
-    // -------------------------------------------------------
-    // [새로 추가] DoctorNote & ScheduledExam 관련 메서드 5개
-    // -------------------------------------------------------
+
 
     // DoctorNote (의사 소견)
     public DoctorNote saveNote(DoctorNote note) {

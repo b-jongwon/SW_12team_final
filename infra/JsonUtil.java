@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 public class JsonUtil {
 
-    // [핵심] User 클래스를 위한 커스텀 Deserializer 정의
+
     // JSON을 읽어서 role을 확인한 뒤, Doctor/Patient 등 맞는 클래스로 매핑해줍니다.
     private static final JsonDeserializer<User> userDeserializer = (json, typeOfT, context) -> {
         JsonObject jsonObject = json.getAsJsonObject();
@@ -52,7 +52,7 @@ public class JsonUtil {
             .setPrettyPrinting() // (선택사항) 파일 저장 시 줄바꿈/들여쓰기 적용
             .create();
 
-    // [수정] synchronized 추가: 동시에 여러 스레드가 읽으려 할 때 충돌 방지
+    // synchronized 추가: 동시에 여러 스레드가 읽으려 할 때 충돌 방지
     public static synchronized <T> T readJson(String path, Type typeOfT) {
         File file = new File(path);
         if (!file.exists()) return null;

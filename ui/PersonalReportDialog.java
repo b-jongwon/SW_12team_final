@@ -22,10 +22,10 @@ public class PersonalReportDialog extends JDialog {
         // 컨트롤러를 통해 리포트 생성 및 가져오기
         ReportController controller = new ReportController();
 
-        // [중요] Service에서 만들어진 PersonalReport 객체를 받아옴
+        // Service에서 만들어진 PersonalReport 객체를 받아옴
         PersonalReport report = controller.createPersonalReport(patientId);
 
-        // [중요] PersonalReport 객체의 getFormatText()를 호출하여 화면에 출력
+        // PersonalReport 객체의 getFormatText()를 호출하여 화면에 출력
         area.setText(report.getFormatText());
         area.setCaretPosition(0); // 스크롤 맨 위로
 

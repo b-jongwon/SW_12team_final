@@ -10,12 +10,12 @@ public class ReportController {
 
     private final ReportService service = new ReportService();
 
-    // 1. 개인화 리포트 생성 (이름 수정됨)
+    // 1. 개인화 리포트 생성
     public PersonalReport createPersonalReport(Long patientId) {
         return service.createPersonalReport(patientId);
     }
 
-    // 2. 개인화 리포트 조회 (이름 수정됨)
+    // 2. 개인화 리포트 조회
     public List<PersonalReport> getPersonalReports(Long patientId) {
         return service.getPersonalReports(patientId);
     }

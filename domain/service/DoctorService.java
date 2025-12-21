@@ -26,10 +26,9 @@ public class DoctorService {
     private final AssignmentRepository assignmentRepo = new AssignmentRepository();
     private final UserRepository userRepo = new UserRepository();
 
-    // [중요] 이 줄이 없어서 에러가 났던 겁니다. 추가해주세요!
     private final MessagingService messagingService = new MessagingService();
 
-    // 담당 환자 목록 조회 (수락된 환자만!)
+    // 담당 환자 목록 조회
     public List<PatientSummary> getMyPatients(Long doctorId) {
         List<PatientAssignment> all = assignmentRepo.findAssignmentsByDoctor(doctorId);
 
@@ -49,10 +48,10 @@ public class DoctorService {
         User u = found.get();
         if (u instanceof Patient) return (Patient) u;
 
-        return null; // Patient가 아닌 User면 null
+        return null;
     }
 
-    // 연결 요청 대기 목록 조회 (PENDING 상태만)
+    // 연결 요청 대기 목록 조회
     public List<PatientSummary> getPendingRequests(Long doctorId) {
         List<PatientAssignment> all = assignmentRepo.findAssignmentsByDoctor(doctorId);
 
@@ -63,9 +62,9 @@ public class DoctorService {
         return convertToSummaries(pending);
     }
 
-    // [수정완료] 주석 제거하고 로직 복원했습니다.
+    // 주석 제거하고 로직 복원했습니다.
     public void replyToRequest(Long assignmentId, boolean isAccept) {
-        // 1. ID로 찾기 (이 부분이 주석되어 있어서 target을 못 찾았던 것임)
+        // 1. ID로 찾기
         Optional<PatientAssignment> target = assignmentRepo.findAll().stream()
                 .filter(a -> a.getId().equals(assignmentId))
                 .findFirst();
@@ -86,7 +85,6 @@ public class DoctorService {
         }
     }
 
-    // [Helper] 배정 리스트 -> 요약 리스트 변환
     private List<PatientSummary> convertToSummaries(List<PatientAssignment> assignments) {
         List<PatientSummary> result = new ArrayList<>();
         for (PatientAssignment assign : assignments) {

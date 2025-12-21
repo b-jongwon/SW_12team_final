@@ -25,9 +25,7 @@ public class CaregiverPanel extends JPanel {
         this.caregiver = caregiver;
         setLayout(new BorderLayout());
 
-        // -------------------------------------------------------------
-        // [수정 시작] 상단 영역: 제목 + 알림 버튼을 같이 넣기 위해 패널 사용
-        // -------------------------------------------------------------
+
         JPanel topContainer = new JPanel(new BorderLayout());
 
         // 1. 상단 제목 (기존 코드)
@@ -36,7 +34,7 @@ public class CaregiverPanel extends JPanel {
         title.setHorizontalAlignment(SwingConstants.CENTER);
         title.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
 
-        // 2. [NEW] 알림 내역 확인 버튼 추가
+        // 2. 알림 내역 확인 버튼 추가
         JButton alertBtn = new JButton("🔔 위험 알림 내역");
         JPanel rightBox = new JPanel(new FlowLayout(FlowLayout.RIGHT)); // 오른쪽 정렬용 패널
         rightBox.add(alertBtn);
@@ -47,14 +45,12 @@ public class CaregiverPanel extends JPanel {
 
         add(topContainer, BorderLayout.NORTH);
 
-        // 3. [NEW] 버튼 이벤트: 알림 내역 다이얼로그 열기
+        // 3. 버튼 이벤트: 알림 내역 다이얼로그 열기
         alertBtn.addActionListener(e -> {
             Window window = SwingUtilities.getWindowAncestor(this);
             new AlertHistoryDialog(window, caregiver.getId()).setVisible(true);
         });
-        // -------------------------------------------------------------
-        // [수정 끝]
-        // -------------------------------------------------------------
+
 
         // 4. 중앙: 탭 패널 (기존 코드 유지)
         JTabbedPane tab = new JTabbedPane();
@@ -64,9 +60,8 @@ public class CaregiverPanel extends JPanel {
         add(tab, BorderLayout.CENTER);
     }
 
-    // --------------------------------------------------------
+
     // [탭 1] 내 가족 목록 패널
-    // --------------------------------------------------------
     private JPanel createFamilyPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         JButton refreshBtn = new JButton("목록 새로고침");
@@ -81,9 +76,9 @@ public class CaregiverPanel extends JPanel {
         familyTable = new JTable(familyModel);
         familyTable.setRowHeight(30);
 
-        // (선택 사항) ID 컬럼 숨기기 코드를 넣을 수도 있지만, 개발 중엔 보이는 게 편합니다.
+        // ID 컬럼 숨기기 코드를 넣을 수도 있지만, 개발 중엔 보이는 게 편합니다.
 
-        // [NEW] 테이블 더블클릭 이벤트 리스너
+        // 테이블 더블클릭 이벤트 리스너
         familyTable.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -111,9 +106,8 @@ public class CaregiverPanel extends JPanel {
         return panel;
     }
 
-    // --------------------------------------------------------
     // [탭 2] 연결 요청 관리 패널
-    // --------------------------------------------------------
+
     private JPanel createRequestPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -145,9 +139,8 @@ public class CaregiverPanel extends JPanel {
         return panel;
     }
 
-    // ========================================================
+
     // 데이터 로드 및 처리 메서드
-    // ========================================================
 
     // 내 가족 데이터 로드
     private void loadFamilyData() {

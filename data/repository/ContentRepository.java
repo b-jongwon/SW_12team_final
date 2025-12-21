@@ -29,8 +29,8 @@ public class ContentRepository {
         return contentRepo.findAll();
     }
 
-    // [NEW] 위험도 기반 필터링 조회
-    // "ALL"인 콘텐츠 OR 내 위험도와 일치하는 콘텐츠만 반환
+
+
     public List<ContentItem> findContentsByRisk(String userRiskLevel) {
         return contentRepo.findAll().stream()
                 .filter(item -> "ALL".equals(item.getTargetRisk()) ||

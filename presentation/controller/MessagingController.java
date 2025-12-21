@@ -27,7 +27,7 @@ public class MessagingController {
         return service.getThreads(userId);
     }
 
-    // [확인] UI에서 호출하는 메서드
+    // UI에서 호출하는 메서드
     public List<Alert> getAlerts(Long userId) {
         return service.getAlerts(userId);
     }

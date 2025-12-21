@@ -25,9 +25,7 @@ public class MessagingRepository {
             new BaseJsonRepository<>("data/alerts.json",
                     new TypeToken<List<Alert>>() {}) {};
 
-    // ----------------------------------------------------
-    // MessageThread 관련
-    // ----------------------------------------------------
+
     public List<MessageThread> findAllThreads() {
         return threadRepo.findAll();
     }
@@ -50,9 +48,7 @@ public class MessagingRepository {
                 .findFirst();
     }
 
-    // ----------------------------------------------------
-    // Message 관련
-    // ----------------------------------------------------
+
     public Message saveMessage(Message m) {
         m.setId(IdGenerator.nextId("msg"));
         messageRepo.save(m);
@@ -65,16 +61,13 @@ public class MessagingRepository {
                 .collect(Collectors.toList());
     }
 
-    // ----------------------------------------------------
-    // Alert (알림) 관련 [핵심]
-    // ----------------------------------------------------
+
     public Alert saveAlert(Alert a) {
         a.setId(IdGenerator.nextId("alert"));
         alertRepo.save(a); // 파일(alerts.json)에 즉시 저장됨
         return a;
     }
 
-    // [통합] 사용자 ID로 알림 조회
     public List<Alert> getAlerts(Long userId) {
         return alertRepo.findAll().stream()
                 .filter(a -> a.getUserId().equals(userId))

@@ -12,13 +12,13 @@ public class AssignmentController {
     private final AssignmentService service = new AssignmentService();
 
     // =================================================================
-    // [수정] 바로 연결하는 게 아니라 '연결 신청(PENDING)'을 보냄
+    // 바로 연결하는 게 아니라 '연결 신청(PENDING)'을 보냄
     // =================================================================
     public PatientAssignment requestConnection(Long patientId, String docLoginId, String careLoginId) {
         return service.requestConnection(patientId, docLoginId, careLoginId);
     }
 
-    // --- 기존 메서드들 (유지) ---
+
     public PatientAssignment assign(Long pid, Long doctorId, Long caregiverId) {
         return service.assignPatient(pid, doctorId, caregiverId);
     }

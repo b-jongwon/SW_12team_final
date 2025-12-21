@@ -65,7 +65,7 @@ public class RiskRenderer extends JPanel implements ListCellRenderer<HealthRecor
                                                   boolean cellHasFocus) {
 
         // 1. 데이터 바인딩 (값을 화면에 꽂기)
-        // 날짜/시간 처리 (HTML 태그를 사용해 두 줄로 표시)
+        // 날짜/시간 처리
         String dateStr = value.getMeasuredAt().toLocalDate().toString();
         String timeStr = value.getMeasuredAt().toLocalTime().toString().substring(0, 5); // HH:mm
         dateLabel.setText("<html><div style='text-align:center;'>" + dateStr + "<br><small>" + timeStr + "</small></div></html>");
@@ -82,7 +82,7 @@ public class RiskRenderer extends JPanel implements ListCellRenderer<HealthRecor
             riskLabel.setText("위험요인: " + risks);
         }
 
-        // 2. ★ 시각화 핵심: 위험 수치(고혈압/고혈당)에 따른 배경색 변경 (Traffic Light System)
+        // 위험 수치(고혈압/고혈당)에 따른 배경색 변경 (Traffic Light System)
         // 기준: 수축기 혈압 140 이상 OR 혈당 126 이상
         boolean isHighRisk = value.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
                 value.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD;

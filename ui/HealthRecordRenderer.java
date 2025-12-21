@@ -6,7 +6,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-// JList의 각 항목을 '그림(Component)'으로 그려주는 렌더러
+
 public class HealthRecordRenderer extends JPanel implements ListCellRenderer<HealthRecord> {
     private JLabel dateLabel = new JLabel();
 
@@ -16,7 +16,7 @@ public class HealthRecordRenderer extends JPanel implements ListCellRenderer<Hea
     private JLabel bmiLabel = new JLabel();
     private JLabel riskLabel = new JLabel();
 
-    // [추가] 나이/성별, 생활습관(흡연/음주) 라벨
+    //  나이/성별, 생활습관(흡연/음주) 라벨
     private JLabel basicInfoLabel = new JLabel();
     private JLabel habitLabel = new JLabel();
 
@@ -82,19 +82,19 @@ public class HealthRecordRenderer extends JPanel implements ListCellRenderer<Hea
         bmiLabel.setText("BMI: " + String.format("%.1f", value.getBmi()));
         riskLabel.setText("위험요인: " + (value.getMainRiskFactors().isEmpty() ? "없음" : value.getMainRiskFactors()));
 
-        // 3. [추가] 상세 정보 바인딩 (나이, 성별, 흡연, 음주)
+        // 3.  상세 정보 바인딩 (나이, 성별, 흡연, 음주)
         String genderKor = "정보없음";
         if ("Male".equalsIgnoreCase(value.getGender())) genderKor = "남성";
         else if ("Female".equalsIgnoreCase(value.getGender())) genderKor = "여성";
 
-        // 예: [25세 / 남성]
+
         basicInfoLabel.setText(String.format("인적사항: %d세 / %s", value.getAge(), genderKor));
 
-        // 예: [흡연: Yes / 음주: Occasional]
+
         habitLabel.setText(String.format("생활: 흡연(%s) / 음주(%s) / 활동(%s)",
                 value.getSmoking(), value.getDrinking(), value.getActivityLevel()));
 
-        // 4. 색상 처리 (위험도에 따른 배경색)
+        // 4. 색상 처리
         boolean isHighRisk = value.getSystolicBp() >= RiskConfiguration.BP_SYSTOLIC_THRESHOLD ||
                 value.getBloodSugar() >= RiskConfiguration.SUGAR_THRESHOLD;
 

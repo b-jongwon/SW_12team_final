@@ -6,18 +6,15 @@ public class User {
     private String password; // (추후 해싱된 값)
     private String name;
 
-    // [변경 1] private -> protected (자식 클래스인 Doctor, Patient가 설정할 수 있게)
     protected String role;
 
     private String phone;
     private String email;
 
-    // [추가] 나이 계산을 위한 생년 필드
     private int birthYear;
 
     public User() {}
 
-    // 기존 생성자 유지 (기존 코드 호환성 위해)
     public User(Long id, String loginId, String password, String name,
                 String role, String phone, String email) {
         this.id = id;
@@ -29,9 +26,7 @@ public class User {
         this.email = email;
     }
 
-    // [중요] checkPassword, changePassword 등 비즈니스 로직은 유지
     public boolean checkPassword(String pw) {
-        // (임시 평문 비교, 추후 해싱 로직 적용)
         return this.password != null && this.password.equals(pw);
     }
 
@@ -44,7 +39,7 @@ public class User {
         this.email = newEmail;
     }
 
-    // --- Getters & Setters ---
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,7 +47,7 @@ public class User {
     public void setLoginId(String loginId) { this.loginId = loginId; }
 
     public String getPassword() { return password; }
-    // setPassword는 유지 (비밀번호 변경 등 필요)
+
     public void setPassword(String password) { this.password = password; }
 
     public String getName() { return name; }
@@ -60,8 +55,7 @@ public class User {
 
     public String getRole() { return role; }
 
-    // [변경 2] 🚨 setRole() 메서드 삭제됨!
-    // 이제 역할은 생성될 때(new Doctor 등) 결정되며, 중간에 바꿀 수 없습니다.
+
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
@@ -69,7 +63,6 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
 
-    // [추가] 아까 ReportService 오류 해결을 위한 메서드
     public int getBirthYear() {
         return birthYear;
     }

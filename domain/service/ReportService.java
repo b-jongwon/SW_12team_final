@@ -31,7 +31,7 @@ public class ReportService {
                     "- 건강 기록을 먼저 입력해주세요.");
         }
 
-        // 날짜순 정렬 (과거 -> 최신)
+        // 날짜순 정렬
         records.sort(Comparator.comparing(HealthRecord::getMeasuredAt));
         HealthRecord past = records.get(0);
         HealthRecord now = records.get(records.size() - 1);
@@ -77,7 +77,7 @@ public class ReportService {
         return reportRepo.getGroupByPatient(pid);
     }
 
-    // ★ [핵심 수정] 시뮬레이션 공식 대신 실제 통계 데이터 매핑 로직 적용
+
     public GroupComparisonResult createGroupComparison(Long pid) {
         // 1. 환자 기록 가져오기
         List<HealthRecord> records = medicalRepo.findRecordsByPatient(pid);
@@ -87,7 +87,7 @@ public class ReportService {
         records.sort((r1, r2) -> r2.getMeasuredAt().compareTo(r1.getMeasuredAt())); // 최신순
         HealthRecord latest = records.get(0);
 
-        // 2. 나이와 성별 확인 (기록이 없으면 기본값 설정)
+        // 2. 나이와 성별 확인
         int age = latest.getAge();
         if (age == 0) age = 30; // 방어 코드
 
@@ -103,8 +103,6 @@ public class ReportService {
         double myMetric = latest.getSystolicBp();
         if (myMetric == 0) return null;
 
-        // 5. [개선됨] 한국인 성별/연령별 평균 수축기 혈압 매핑
-        // (출처: 질병관리청 국민건강영양조사 데이터 참조)
         double groupAvg = 120.0;
 
         if ("Male".equalsIgnoreCase(gender)) {
@@ -123,14 +121,12 @@ public class ReportService {
             else groupAvg = 145.0;
         }
 
-        // 6. 백분위 계산 (표준편차 15로 가정하고 Z-score 방식으로 계산)
+        // 6. 백분위 계산
         double diff = myMetric - groupAvg;
         double zScore = diff / 15.0;
 
-        // Z-score를 백분위로 근사 변환 (중간값 50에서 시작)
-        double percentile = 50.0 + (zScore * 34.0);
 
-        // 범위 보정 (1% ~ 99% 사이로 제한)
+        double percentile = 50.0 + (zScore * 34.0);// 범위 보정 (1% ~ 99% 사이로 제한)
         if (percentile > 99.0) percentile = 99.0;
         if (percentile < 1.0) percentile = 1.0;
 
@@ -142,7 +138,6 @@ public class ReportService {
         result.setGroupAverage(groupAvg);
         result.setPercentile(Math.round(percentile * 10) / 10.0); // 소수점 첫째자리까지
 
-        // 차트용 JSON 데이터 생성
         String chartData = String.format("{\"my\": %.1f, \"avg\": %.1f}", myMetric, groupAvg);
         result.setChartData(chartData);
 

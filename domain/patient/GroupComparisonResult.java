@@ -3,10 +3,7 @@ package domain.patient;
 
 import java.time.LocalDateTime;
 
-/**
- * 그룹 비교 리포트: 동일 연령/성별/질환군 등과 비교한 지표.
- * 합병증 관련 비교도 이 안에서 표현 가능 (groupKey로 구분).
- */
+
 public class GroupComparisonResult {
     private Long id;
     private Long patientId;

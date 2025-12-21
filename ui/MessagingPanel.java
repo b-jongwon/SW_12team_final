@@ -71,9 +71,9 @@ public class MessagingPanel extends JPanel {
         loadThreads();
     }
 
-    // =====================================================
+
     // 대화방 목록 로드 (방 이름 수정)
-    // =====================================================
+
     private void loadThreads() {
         threadCombo.removeAllItems();
         List<MessageThread> threads = controller.getThreads(user.getId());

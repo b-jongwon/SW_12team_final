@@ -9,7 +9,7 @@ public class AdminController {
 
     private final AdminService service = new AdminService();
 
-    // [수정] 공지사항 등록 연결
+    //  공지사항 등록 연결
     public void postAnnouncement(String title, String content) {
         service.postAnnouncement(title, content);
     }

@@ -16,10 +16,10 @@ public class AssignmentService {
     private final AssignmentRepository repo = new AssignmentRepository();
     private final UserRepository userRepo = new UserRepository();
 
-    // [NEW] ★ 초기화 시에도 채팅방 연동을 위해 추가
+    //  초기화 시에도 채팅방 연동을 위해 추가
     private final MessagingService messagingService = new MessagingService();
 
-    // 1. 로그인 ID로 배정 '신청' (환자가 버튼 눌러서 신청할 때)
+    // 1. 로그인 ID로 배정 '신청'
     public PatientAssignment requestConnection(Long patientId, String docLoginId, String careLoginId) {
         Long doctorId = null;
         Long caregiverId = null;
@@ -42,7 +42,7 @@ public class AssignmentService {
             }
         }
 
-        // 중복 체크 로직 (기존 유지)
+        // 중복 체크 로직
         List<PatientAssignment> myAssignments = repo.getAssignments(patientId);
         for (PatientAssignment a : myAssignments) {
             boolean sameDoc = (doctorId != null && doctorId.equals(a.getDoctorId()));
@@ -63,7 +63,7 @@ public class AssignmentService {
             }
         }
 
-        // 주치의 유일성 체크 (기존 유지)
+        // 주치의 유일성 체크
         if (doctorId != null) {
             for (PatientAssignment a : myAssignments) {
                 if (a.getDoctorId() != null) {
@@ -83,7 +83,7 @@ public class AssignmentService {
         return repo.saveAssignment(request);
     }
 
-    // 2. 환자 연결 현황 조회 (기존 유지)
+    // 2. 환자 연결 현황 조회
     public List<ConnectionSummary> getConnectionStatus(Long patientId) {
         List<ConnectionSummary> result = new ArrayList<>();
         List<PatientAssignment> list = repo.getAssignments(patientId);
@@ -118,7 +118,7 @@ public class AssignmentService {
         return result;
     }
 
-    // [★ 수정된 부분] 강제 배정 (Main에서 초기화할 때 쓰이는 메서드)
+    //  강제 배정
     public PatientAssignment assignPatient(Long pid, Long doctorId, Long caregiverId) {
         PatientAssignment a = new PatientAssignment();
         // ACCEPTED 상태로 바로 생성됨

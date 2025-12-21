@@ -18,12 +18,12 @@ public class DoctorController {
         return service.getMyPatients(doctorId);
     }
 
-    // [NEW] 대기 중인 요청 목록
+    // 대기 중인 요청 목록
     public List<DoctorService.PatientSummary> getPendingRequests(Long doctorId) {
         return service.getPendingRequests(doctorId);
     }
 
-    // [NEW] 요청 처리 (수락/거절)
+    // 요청 처리 (수락/거절)
     public void reply(Long assignmentId, boolean accept) {
         service.replyToRequest(assignmentId, accept);
     }
