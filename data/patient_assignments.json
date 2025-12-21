@@ -3,21 +3,14 @@
     "id": 1,
     "patientId": 1,
     "doctorId": 3,
-    "assignedAt": "2025-12-21T06:09:47.423499800",
+    "assignedAt": "2025-12-21T13:55:49.810026700",
     "status": "ACCEPTED"
   },
   {
     "id": 2,
     "patientId": 1,
     "caregiverId": 5,
-    "assignedAt": "2025-12-21T06:09:47.436531500",
-    "status": "ACCEPTED"
-  },
-  {
-    "id": 3,
-    "patientId": 2,
-    "doctorId": 3,
-    "assignedAt": "2025-12-21T06:11:10.151748800",
+    "assignedAt": "2025-12-21T13:55:49.822059700",
     "status": "ACCEPTED"
   }
 ]
